@@ -374,10 +374,221 @@ div.clear {
   border-width: 2px;
   border-style: solid;
 }
+
 .justify {
   display: flex;
   justify-content: space-between;
 }
+
 .center {
   text-align: center;
 }
+
+/**
+ * Nouveaux styles pour la section firmware personnalisé
+ */
+
+/* Section principale de contenu */
+.content {
+  padding: 20px 70px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Section de sélection du firmware */
+.firmware-selector {
+  background-color: #f5f5f5;
+  padding: 30px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  border: 2px solid #00a7e9;
+}
+
+.firmware-selector h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #000;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+/* Sélecteur de firmware stylisé */
+#firmware-picker {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #000;
+  border-radius: 15px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: proxima-nova, sans-serif;
+}
+
+#firmware-picker:hover {
+  border-color: #00a7e9;
+}
+
+#firmware-picker:focus {
+  border-color: #00a7e9;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 167, 233, 0.2);
+}
+
+/* Information sur le firmware sélectionné */
+#firmware-info {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #e7f3ff;
+  border-left: 4px solid #00a7e9;
+  border-radius: 5px;
+}
+
+#firmware-info p {
+  line-height: 1.6;
+  margin: 0;
+}
+
+#firmware-description {
+  color: #000;
+}
+
+#firmware-description strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #00a7e9;
+}
+
+/* Section des boutons de programmation */
+.program-section {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.program-section button {
+  flex: 1;
+  max-width: 250px;
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: 600;
+  border: 2px solid;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: proxima-nova, sans-serif;
+}
+
+#programButton {
+  background-color: #8ec641;
+  border-color: #71ae1e;
+  color: #fff;
+}
+
+#programButton:hover:not(:disabled) {
+  background-color: #71ae1e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#programButton:disabled {
+  background-color: #ccc;
+  border-color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+#eraseButton {
+  background-color: #c64141;
+  border-color: #900;
+  color: #fff;
+}
+
+#eraseButton:hover:not(:disabled) {
+  background-color: #900;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#eraseButton:disabled {
+  background-color: #ccc;
+  border-color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Section de sortie console */
+.console-output {
+  background-color: #f5f5f5;
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #00a7e9;
+}
+
+.console-output h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #000;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.console {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  padding: 20px;
+  border-radius: 5px;
+  font-family: pt-mono, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  height: 300px;
+  overflow-y: auto;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: 2px solid #000;
+}
+
+.console::-webkit-scrollbar {
+  width: 10px;
+}
+
+.console::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.console::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+
+.console::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+/* Responsive pour petits écrans */
+@media (max-width: 768px) {
+  .content {
+    padding: 20px 20px;
+  }
+  
+  .firmware-selector,
+  .console-output {
+    padding: 20px;
+  }
+  
+  .program-section {
+    flex-direction: column;
+  }
+  
+  .program-section button {
+    max-width: 100%;
+  }
+  
+  #firmware-picker {
+    font-size: 14px;
+  }
+  }
