@@ -1,80 +1,97 @@
-// Vérification de la compatibilité WebSerial
-console.log('🔍 Vérification WebSerial...');
+// Script principal pour Adafruit WebSerial ESPTool
+console.log('Script chargé');
 
-if (!("serial" in navigator)) {
-  console.error('❌ WebSerial non disponible');
-  const notSupported = document.getElementById("notSupported");
-  if (notSupported) {
-    notSupported.style.display = "block";
+// Attendre que TOUT soit chargé
+window.addEventListener('load', function() {
+  console.log('Window load event');
+  initApp();
+});
+
+function initApp() {
+  console.log('Initialisation de l\'application...');
+  
+  // Vérification WebSerial
+  if (!("serial" in navigator)) {
+    console.error('WebSerial non supporté');
+    const notSupported = document.getElementById("notSupported");
+    if (notSupported) {
+      notSupported.style.display = "block";
+    }
+    return;
   }
-  const content = document.querySelector(".content");
-  if (content) {
-    content.style.display = "none";
-  }
-} else {
-  console.log('✅ WebSerial disponible');
+  
+  console.log('WebSerial supporté ✓');
+  
+  // Cacher le message d'erreur
   const notSupported = document.getElementById("notSupported");
   if (notSupported) {
     notSupported.style.display = "none";
   }
-}
-
-// Variables globales
-let port;
-let reader;
-let writer;
-let isConnected = false;
-
-// Fonction pour logger dans la console
-function logToConsole(message, type = 'info') {
-  const consoleElement = document.getElementById('console');
-  if (consoleElement) {
-    const timestamp = new Date().toLocaleTimeString();
-    let prefix = '✅';
-    if (type === 'error') prefix = '❌';
-    else if (type === 'warning') prefix = '⚠️';
-    else if (type === 'info') prefix = 'ℹ️';
-    
-    consoleElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
-    consoleElement.scrollTop = consoleElement.scrollHeight;
-  }
-  console.log(message);
-}
-
-// Initialisation au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('📄 Page chargée, initialisation...');
   
-  // Éléments DOM
+  // Variables globales
+  let port = null;
+  let isConnected = false;
+  
+  // Récupérer tous les éléments
   const connectButton = document.getElementById('butConnect');
   const baudRateSelect = document.getElementById('baudRate');
   const firmwarePicker = document.getElementById('firmware-picker');
   const programButton = document.getElementById('programButton');
   const eraseButton = document.getElementById('eraseButton');
+  const consoleElement = document.getElementById('console');
   const darkmodeToggle = document.getElementById('darkmode');
   
-  // Vérifier que tous les éléments existent
-  if (!connectButton) console.error('❌ butConnect non trouvé');
-  if (!baudRateSelect) console.error('❌ baudRate non trouvé');
-  if (!firmwarePicker) console.error('❌ firmware-picker non trouvé');
-  if (!programButton) console.error('❌ programButton non trouvé');
-  if (!eraseButton) console.error('❌ eraseButton non trouvé');
+  // Vérifier que les éléments critiques existent
+  console.log('Vérification des éléments DOM:');
+  console.log('- connectButton:', connectButton ? '✓' : '✗');
+  console.log('- baudRateSelect:', baudRateSelect ? '✓' : '✗');
+  console.log('- firmwarePicker:', firmwarePicker ? '✓' : '✗');
+  console.log('- programButton:', programButton ? '✓' : '✗');
+  console.log('- eraseButton:', eraseButton ? '✓' : '✗');
+  console.log('- consoleElement:', consoleElement ? '✓' : '✗');
   
-  // Remplir les vitesses de baud
+  // Fonction de log
+  function log(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    let prefix = 'ℹ️';
+    
+    if (type === 'error') prefix = '❌';
+    else if (type === 'warning') prefix = '⚠️';
+    else if (type === 'success') prefix = '✅';
+    
+    const logMessage = `[${timestamp}] ${prefix} ${message}`;
+    
+    if (consoleElement) {
+      consoleElement.textContent += logMessage + '\n';
+      consoleElement.scrollTop = consoleElement.scrollHeight;
+    }
+    
+    console.log(logMessage);
+  }
+  
+  // Message de bienvenue
+  log('═══════════════════════════════════════');
+  log('Adafruit WebSerial ESPTool');
+  log('Prêt à programmer votre ESP32');
+  log('═══════════════════════════════════════');
+  
+  // Remplir le select des vitesses de baud
   if (baudRateSelect) {
     const baudRates = [9600, 57600, 115200, 230400, 460800, 921600];
     baudRates.forEach(rate => {
       const option = document.createElement('option');
       option.value = rate;
-      option.text = rate + ' baud';
-      if (rate === 115200) option.selected = true;
+      option.textContent = rate + ' baud';
+      if (rate === 115200) {
+        option.selected = true;
+      }
       baudRateSelect.appendChild(option);
     });
-    console.log('✅ Vitesses de baud configurées');
+    log('Vitesses de baud configurées', 'success');
   }
   
-  // Afficher les infos du firmware sélectionné
-  function displayFirmwareInfo() {
+  // Afficher les infos du firmware
+  function updateFirmwareInfo() {
     if (!firmwarePicker) return;
     
     const selectedFirmware = firmwarePicker.value;
@@ -83,7 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (selectedFirmware && window.firmwareManifests && window.firmwareManifests[selectedFirmware]) {
       const firmware = window.firmwareManifests[selectedFirmware];
-      if (firmwareInfo) firmwareInfo.style.display = 'block';
+      
+      if (firmwareInfo) {
+        firmwareInfo.style.display = 'block';
+      }
+      
       if (firmwareDescription) {
         firmwareDescription.innerHTML = `
           <strong>${firmware.name}</strong><br>
@@ -91,32 +112,38 @@ document.addEventListener('DOMContentLoaded', function() {
           ${firmware.description || ''}
         `;
       }
-      console.log('✅ Firmware sélectionné:', firmware.name);
+      
+      log('Firmware sélectionné: ' + firmware.name, 'success');
     } else {
-      if (firmwareInfo) firmwareInfo.style.display = 'none';
+      if (firmwareInfo) {
+        firmwareInfo.style.display = 'none';
+      }
     }
   }
   
-  // Afficher les infos au chargement
-  displayFirmwareInfo();
+  // Initialiser l'affichage du firmware
+  updateFirmwareInfo();
   
-  // Gérer le changement de firmware
+  // Event: changement de firmware
   if (firmwarePicker) {
-    firmwarePicker.addEventListener('change', displayFirmwareInfo);
+    firmwarePicker.addEventListener('change', updateFirmwareInfo);
   }
   
-  // Fonction de connexion
+  // Event: bouton Connect/Disconnect
   if (connectButton) {
     connectButton.addEventListener('click', async function() {
       if (!isConnected) {
+        // CONNEXION
         try {
-          logToConsole('Demande de connexion au port série...');
+          log('Sélection du port série...');
           
-          // Demander à l'utilisateur de sélectionner un port
+          // Demander le port
           port = await navigator.serial.requestPort();
           
-          // Ouvrir le port avec la vitesse sélectionnée
+          // Obtenir la vitesse
           const baudRate = baudRateSelect ? parseInt(baudRateSelect.value) : 115200;
+          
+          // Ouvrir le port
           await port.open({ baudRate: baudRate });
           
           isConnected = true;
@@ -128,24 +155,24 @@ document.addEventListener('DOMContentLoaded', function() {
           if (programButton) programButton.disabled = false;
           if (eraseButton) eraseButton.disabled = false;
           
-          logToConsole(`Connecté avec succès au port série (${baudRate} baud)`);
+          log(`Connecté au port série (${baudRate} baud)`, 'success');
           
         } catch (error) {
-          console.error('❌ Erreur de connexion:', error);
-          logToConsole('Erreur de connexion: ' + error.message, 'error');
+          log('Erreur de connexion: ' + error.message, 'error');
+          console.error(error);
         }
+        
       } else {
-        // Déconnexion
+        // DÉCONNEXION
         try {
-          logToConsole('Déconnexion en cours...');
+          log('Déconnexion...');
           
-          if (reader) {
-            await reader.cancel();
-          }
           if (port) {
             await port.close();
           }
+          
           isConnected = false;
+          port = null;
           connectButton.textContent = 'Connect';
           connectButton.style.backgroundColor = '#000';
           connectButton.style.borderColor = '#fff';
@@ -154,105 +181,87 @@ document.addEventListener('DOMContentLoaded', function() {
           if (programButton) programButton.disabled = true;
           if (eraseButton) eraseButton.disabled = true;
           
-          logToConsole('Déconnecté du port série');
+          log('Déconnecté', 'success');
           
         } catch (error) {
-          console.error('❌ Erreur de déconnexion:', error);
-          logToConsole('Erreur de déconnexion: ' + error.message, 'error');
+          log('Erreur de déconnexion: ' + error.message, 'error');
+          console.error(error);
         }
       }
     });
   }
   
-  // Fonction Program
+  // Event: bouton Program
   if (programButton) {
     programButton.addEventListener('click', async function() {
       if (!isConnected) {
-        logToConsole('Veuillez d\'abord vous connecter à l\'ESP32', 'error');
+        log('Erreur: Connectez-vous d\'abord à l\'ESP32', 'error');
         return;
       }
       
       const selectedFirmware = firmwarePicker ? firmwarePicker.value : null;
+      
       if (!selectedFirmware || !window.firmwareManifests || !window.firmwareManifests[selectedFirmware]) {
-        logToConsole('Veuillez sélectionner un firmware valide', 'error');
+        log('Erreur: Firmware non valide', 'error');
         return;
       }
       
       const firmware = window.firmwareManifests[selectedFirmware];
-      logToConsole('═══════════════════════════════════════');
-      logToConsole('Démarrage de la programmation...');
-      logToConsole('Firmware: ' + firmware.name + ' v' + firmware.version);
-      logToConsole('═══════════════════════════════════════');
       
-      // Liste des fichiers à flasher
+      log('═══════════════════════════════════════');
+      log('Début de la programmation');
+      log('Firmware: ' + firmware.name + ' v' + firmware.version);
+      log('═══════════════════════════════════════');
+      
+      // Afficher les fichiers
       if (firmware.builds && firmware.builds[0] && firmware.builds[0].parts) {
+        log('Fichiers à flasher:');
         firmware.builds[0].parts.forEach((part, index) => {
-          logToConsole(`Fichier ${index + 1}: ${part.path} @ 0x${part.offset.toString(16)}`);
+          log(`  ${index + 1}. ${part.path} @ 0x${part.offset.toString(16).toUpperCase()}`);
         });
       }
       
-      logToConsole('⚠️ Intégration esptool.js requise pour le flashage réel', 'warning');
-      logToConsole('Cette fonctionnalité sera implémentée prochainement', 'info');
+      log('⚠️ Intégration esptool.js nécessaire', 'warning');
+      log('Fonctionnalité en développement');
     });
   }
   
-  // Fonction Erase
+  // Event: bouton Erase
   if (eraseButton) {
     eraseButton.addEventListener('click', async function() {
       if (!isConnected) {
-        logToConsole('Veuillez d\'abord vous connecter à l\'ESP32', 'error');
+        log('Erreur: Connectez-vous d\'abord à l\'ESP32', 'error');
         return;
       }
       
-      if (confirm('⚠️ ATTENTION ⚠️\n\nÊtes-vous sûr de vouloir effacer COMPLÈTEMENT la flash de l\'ESP32 ?\n\nCette action est irréversible !')) {
-        logToConsole('═══════════════════════════════════════');
-        logToConsole('Démarrage de l\'effacement de la flash...');
-        logToConsole('═══════════════════════════════════════');
-        logToConsole('⚠️ Intégration esptool.js requise pour l\'effacement réel', 'warning');
-        logToConsole('Cette fonctionnalité sera implémentée prochainement', 'info');
+      const confirmed = confirm(
+        '⚠️ ATTENTION ⚠️\n\n' +
+        'Voulez-vous vraiment effacer TOUTE la mémoire flash de l\'ESP32 ?\n\n' +
+        'Cette action est IRRÉVERSIBLE !'
+      );
+      
+      if (confirmed) {
+        log('═══════════════════════════════════════');
+        log('Effacement de la flash');
+        log('═══════════════════════════════════════');
+        log('⚠️ Intégration esptool.js nécessaire', 'warning');
+        log('Fonctionnalité en développement');
       }
     });
   }
   
-  // Gestion du dark mode
+  // Event: Dark mode toggle
   if (darkmodeToggle) {
     darkmodeToggle.addEventListener('change', function() {
       if (this.checked) {
         document.body.classList.add('dark-mode');
-        logToConsole('Mode sombre activé');
+        log('Mode sombre activé');
       } else {
         document.body.classList.remove('dark-mode');
-        logToConsole('Mode clair activé');
+        log('Mode clair activé');
       }
     });
   }
   
-  // Message de bienvenue
-  logToConsole('═══════════════════════════════════════');
-  logToConsole('Adafruit WebSerial ESPTool');
-  logToConsole('Prêt à flasher votre ESP32 !');
-  logToConsole('═══════════════════════════════════════');
-});
-```
-
-## ✅ Résumé des changements clés :
-
-1. **Tous les éléments HTML nécessaires sont présents** : `console`, `programButton`, `eraseButton`, etc.
-2. **Le script vérifie l'existence de chaque élément** avant d'ajouter des event listeners
-3. **Messages de log détaillés** pour faciliter le débogage
-4. **L'ordre de chargement est correct** : manifests → script.js
-5. **Gestion d'erreur robuste** avec try/catch
-
-## 🧪 Test rapide
-
-Après avoir mis à jour ces fichiers :
-
-1. **Rafraîchissez la page** avec `Ctrl + F5`
-2. **Ouvrez la console** (F12)
-3. Vous devriez voir :
-```
-   🔍 Vérification WebSerial...
-   ✅ WebSerial disponible
-   📄 Page chargée, initialisation...
-   ✅ Vitesses de baud configurées
-   ✅ Firmware sélectionné: Mon Firmware ESP32 Personnalisé
+  console.log('Initialisation terminée ✓');
+}
