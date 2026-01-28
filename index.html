@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Adafruit WebSerial ESPTool</title>
+    <title>Beyou Flash Utility</title>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -38,7 +38,7 @@
       </div>
       
       <div class="subheader">
-        <div class="title left">Adafruit WebSerial ESPTool</div>
+        <div class="title left">SFA Flash</div>
         <div class="right">
           <label for="noReset"> No reset for Passthrough updates</label>
           <div class="onoffswitch" style="margin-right: 30px;">
@@ -63,7 +63,7 @@
         <div class="firmware-selector">
           <h2>Sélectionner un firmware</h2>
           <select id="firmware-picker">
-            <option value="mon-firmware-custom" selected>Mon Firmware ESP32 Personnalisé</option>
+          <option value="mon-firmware-custom" selected>SFA Production</option>
           </select>
           <div id="firmware-info" style="margin-top: 20px; display: none;">
             <p id="firmware-description"></p>
@@ -90,9 +90,8 @@
     <script>
       window.firmwareManifests = {
         "mon-firmware-custom": {
-          name: "Mon Firmware ESP32 Personnalisé",
-          version: "1.0.0",
-          description: "Firmware complet avec bootloader, partitions et application",
+          name: "Firmware info",
+          version: "1.9.0",
           home_assistant_domain: null,
           new_install_prompt_erase: true,
           builds: [
@@ -114,28 +113,4 @@
     <script src="js/script.js"></script>
   </body>
 </html>
-```
 
-## 🔑 Points clés de la solution :
-
-1. ✅ Utilise `window.addEventListener('load')` au lieu de `DOMContentLoaded`
-2. ✅ Vérifie l'existence de CHAQUE élément avant d'ajouter un listener
-3. ✅ Le script est chargé à la FIN du body
-4. ✅ Les manifests sont définis AVANT le script
-5. ✅ Pas de `type="module"` qui peut causer des problèmes de timing
-
-## 🧪 Test
-
-1. Sauvegardez les deux fichiers
-2. Videz le cache : `Ctrl + Shift + Delete` → Vider le cache
-3. Rechargez la page : `Ctrl + F5`
-4. Ouvrez F12, vous devriez voir :
-```
-   Script chargé
-   Window load event
-   Initialisation de l'application...
-   WebSerial supporté ✓
-   Vérification des éléments DOM:
-   - connectButton: ✓
-   - baudRateSelect: ✓
-   ...
