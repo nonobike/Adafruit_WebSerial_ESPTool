@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>WebSerial ESP</title>
+    <title>Adafruit WebSerial ESPTool</title>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -32,7 +32,6 @@
       class="alternate"
       disabled
     />
-    <script type="module" src="js/script.js" defer></script>
   </head>
   <body>
     <header class="header">
@@ -44,13 +43,15 @@
         <button id="butConnect" type="button">Connect</button>
       </div>
     </header>
+    
     <main class="main">
-      <div id="notSupported" class="notSupported">
+      <div id="notSupported" class="notSupported" style="display: none;">
         Sorry, <b>Web Serial</b> is not supported on this device, make sure
         you're running Chrome 89 or later.
       </div>
+      
       <div class="subheader">
-        <div class="title left">WebSerial ESP</div>
+        <div class="title left">Adafruit WebSerial ESPTool</div>
         <div class="right">
           <label for="noReset"> No reset for Passthrough updates</label>
           <div class="onoffswitch" style="margin-right: 30px;">
@@ -87,7 +88,7 @@
         <div class="firmware-selector">
           <h2>Sélectionner un firmware</h2>
           <select id="firmware-picker">
-            <option value="mon-firmware-custom">SFA Production</option>
+            <option value="mon-firmware-custom" selected>Mon Firmware ESP32 Personnalisé</option>
           </select>
           <div id="firmware-info" style="margin-top: 20px; display: none;">
             <p id="firmware-description"></p>
@@ -106,13 +107,17 @@
       </div>
     </main>
 
+    <footer class="footer">
+      <p>© 2025 Adafruit Industries | WebSerial ESPTool</p>
+    </footer>
+
     <!-- Configuration des firmwares -->
     <script>
       // Configuration de votre firmware personnalisé
       window.firmwareManifests = {
         "mon-firmware-custom": {
-          name: "SFA Production",
-          version: "1.3.0",
+          name: "Mon Firmware ESP32 Personnalisé",
+          version: "1.0.0",
           description: "Firmware complet avec bootloader, partitions et application",
           home_assistant_domain: null,
           new_install_prompt_erase: true,
@@ -138,34 +143,9 @@
           ]
         }
       };
-
-      // Gérer l'affichage des informations du firmware
-      document.addEventListener('DOMContentLoaded', function() {
-        const firmwarePicker = document.getElementById('firmware-picker');
-        const firmwareInfo = document.getElementById('firmware-info');
-        const firmwareDescription = document.getElementById('firmware-description');
-        
-        if (firmwarePicker) {
-          firmwarePicker.addEventListener('change', function() {
-            const selectedFirmware = this.value;
-            if (selectedFirmware && window.firmwareManifests[selectedFirmware]) {
-              const firmware = window.firmwareManifests[selectedFirmware];
-              firmwareInfo.style.display = 'block';
-              firmwareDescription.innerHTML = `
-                <strong>${firmware.name}</strong><br>
-                Version: ${firmware.version}<br>
-                ${firmware.description || ''}
-              `;
-            } else {
-              firmwareInfo.style.display = 'none';
-            }
-          });
-        }
-      });
     </script>
 
-    <footer class="footer">
-      <p>© 2026</p>
-    </footer>
+    <!-- Charger le script APRÈS la définition des manifests -->
+    <script type="module" src="js/script.js"></script>
   </body>
 </html>
