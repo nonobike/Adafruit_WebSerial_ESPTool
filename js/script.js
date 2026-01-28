@@ -60,9 +60,7 @@ function initApp() {
     console.log(logMessage);
   }
 
-  log('═══════════════════════════════════════');
   log('Attente de connexion');
-  log('═══════════════════════════════════════');
 
   if (baudRateSelect) {
     const baudRates = [9600, 57600, 115200, 230400, 460800, 921600];
@@ -75,7 +73,6 @@ function initApp() {
       }
       baudRateSelect.appendChild(option);
     });
-    log('Vitesses de baud configurées', 'success');
   }
 
   function updateFirmwareInfo() {
@@ -100,7 +97,6 @@ function initApp() {
         `;
       }
 
-      log('Firmware sélectionné: ' + firmware.name, 'success');
     } else {
       if (firmwareInfo) {
         firmwareInfo.style.display = 'none';
