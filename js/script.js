@@ -1,7 +1,5 @@
-// Script principal pour Adafruit WebSerial ESPTool
 console.log('Script chargé');
 
-// Attendre que TOUT soit chargé
 window.addEventListener('load', function() {
   console.log('Window load event');
   initApp();
@@ -10,7 +8,6 @@ window.addEventListener('load', function() {
 function initApp() {
   console.log('Initialisation de l\'application...');
   
-  // Vérification WebSerial
   if (!("serial" in navigator)) {
     console.error('WebSerial non supporté');
     const notSupported = document.getElementById("notSupported");
@@ -22,17 +19,14 @@ function initApp() {
   
   console.log('WebSerial supporté ✓');
   
-  // Cacher le message d'erreur
   const notSupported = document.getElementById("notSupported");
   if (notSupported) {
     notSupported.style.display = "none";
   }
   
-  // Variables globales
   let port = null;
   let isConnected = false;
   
-  // Récupérer tous les éléments
   const connectButton = document.getElementById('butConnect');
   const baudRateSelect = document.getElementById('baudRate');
   const firmwarePicker = document.getElementById('firmware-picker');
@@ -40,8 +34,7 @@ function initApp() {
   const eraseButton = document.getElementById('eraseButton');
   const consoleElement = document.getElementById('console');
   const darkmodeToggle = document.getElementById('darkmode');
-  
-  // Vérifier que les éléments critiques existent
+
   console.log('Vérification des éléments DOM:');
   console.log('- connectButton:', connectButton ? '✓' : '✗');
   console.log('- baudRateSelect:', baudRateSelect ? '✓' : '✗');
@@ -50,7 +43,6 @@ function initApp() {
   console.log('- eraseButton:', eraseButton ? '✓' : '✗');
   console.log('- consoleElement:', consoleElement ? '✓' : '✗');
   
-  // Fonction de log
   function log(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString();
     let prefix = 'ℹ️';
@@ -69,13 +61,11 @@ function initApp() {
     console.log(logMessage);
   }
   
-  // Message de bienvenue
+
   log('═══════════════════════════════════════');
-  log('Adafruit WebSerial ESPTool');
-  log('Prêt à programmer votre ESP32');
+  log('115200 Baud);
   log('═══════════════════════════════════════');
   
-  // Remplir le select des vitesses de baud
   if (baudRateSelect) {
     const baudRates = [9600, 57600, 115200, 230400, 460800, 921600];
     baudRates.forEach(rate => {
@@ -90,7 +80,6 @@ function initApp() {
     log('Vitesses de baud configurées', 'success');
   }
   
-  // Afficher les infos du firmware
   function updateFirmwareInfo() {
     if (!firmwarePicker) return;
     
@@ -113,7 +102,6 @@ function initApp() {
         `;
       }
       
-      log('Firmware sélectionné: ' + firmware.name, 'success');
     } else {
       if (firmwareInfo) {
         firmwareInfo.style.display = 'none';
@@ -121,15 +109,12 @@ function initApp() {
     }
   }
   
-  // Initialiser l'affichage du firmware
   updateFirmwareInfo();
   
-  // Event: changement de firmware
   if (firmwarePicker) {
     firmwarePicker.addEventListener('change', updateFirmwareInfo);
   }
   
-  // Event: bouton Connect/Disconnect
   if (connectButton) {
     connectButton.addEventListener('click', async function() {
       if (!isConnected) {
@@ -191,7 +176,7 @@ function initApp() {
     });
   }
   
-  // Event: bouton Program
+
   if (programButton) {
     programButton.addEventListener('click', async function() {
       if (!isConnected) {
@@ -213,7 +198,7 @@ function initApp() {
       log('Firmware: ' + firmware.name + ' v' + firmware.version);
       log('═══════════════════════════════════════');
       
-      // Afficher les fichiers
+
       if (firmware.builds && firmware.builds[0] && firmware.builds[0].parts) {
         log('Fichiers à flasher:');
         firmware.builds[0].parts.forEach((part, index) => {
@@ -226,7 +211,6 @@ function initApp() {
     });
   }
   
-  // Event: bouton Erase
   if (eraseButton) {
     eraseButton.addEventListener('click', async function() {
       if (!isConnected) {
@@ -250,7 +234,6 @@ function initApp() {
     });
   }
   
-  // Event: Dark mode toggle
   if (darkmodeToggle) {
     darkmodeToggle.addEventListener('change', function() {
       if (this.checked) {
