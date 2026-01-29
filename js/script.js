@@ -1,28 +1,8 @@
 console.log('Script chargé');
 
-window.addEventListener('load', function() {
-  console.log('Window load event');
-  initApp();
-});
-
-function initApp() {
-  console.log('Initialisation de l\'application...');
-
-  if (!("serial" in navigator)) {
-    console.error('WebSerial non supporté');
-    const notSupported = document.getElementById("notSupported");
-    if (notSupported) {
-      notSupported.style.display = "block";
-    }
-    return;
-  }
-
-  console.log('WebSerial supporté ✓');
-
-  const notSupported = document.getElementById("notSupported");
-  if (notSupported) {
-    notSupported.style.display = "none";
-  }
+// Attendre que le DOM soit entièrement chargé
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM entièrement chargé');
 
   // Variables globales pour esptool-js
   let port = null;
@@ -30,7 +10,8 @@ function initApp() {
   let esploader = null;
   let transport = null;
   let chip = null;
-  
+
+  // Récupération des éléments DOM
   const connectButton = document.getElementById('butConnect');
   const baudRateSelect = document.getElementById('baudRate');
   const firmwarePicker = document.getElementById('firmware-picker');
@@ -38,14 +19,20 @@ function initApp() {
   const eraseButton = document.getElementById('eraseButton');
   const consoleElement = document.getElementById('console');
 
-  console.log('Vérification des éléments DOM:');
-  console.log('- connectButton:', connectButton ? '✓' : '✗');
-  console.log('- baudRateSelect:', baudRateSelect ? '✓' : '✗');
-  console.log('- firmwarePicker:', firmwarePicker ? '✓' : '✗');
-  console.log('- programButton:', programButton ? '✓' : '✗');
-  console.log('- eraseButton:', eraseButton ? '✓' : '✗');
-  console.log('- consoleElement:', consoleElement ? '✓' : '✗');
+  // Vérification du support de WebSerial
+  if (!("serial" in navigator)) {
+    console.error('WebSerial non supporté');
+    const notSupported = document.getElementById("notSupported");
+    if (notSupported) notSupported.style.display = "block";
+    return;
+  } else {
+    const notSupported = document.getElementById("notSupported");
+    if (notSupported) notSupported.style.display = "none";
+  }
 
+  console.log('WebSerial supporté ✓');
+
+  // Fonction pour afficher des logs dans la console
   function log(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString();
     let prefix = 'ℹ️';
@@ -62,15 +49,17 @@ function initApp() {
       consoleElement.scrollTop = consoleElement.scrollHeight;
     }
 
-    console.log(logMessage);
+    if (type === 'error') {
+      console.error(message);
+    } else {
+      console.log(logMessage);
+    }
   }
 
   // Terminal pour esptool-js
   const espLoaderTerminal = {
     clean() {
-      if (consoleElement) {
-        consoleElement.textContent = '';
-      }
+      if (consoleElement) consoleElement.textContent = '';
     },
     writeLine(data) {
       log(data);
@@ -83,24 +72,20 @@ function initApp() {
     }
   };
 
-  log('═══════════════════════════════════════');
-  log('Connectez votre carte');
-  log('═══════════════════════════════════════');
-
+  // Configuration des vitesses de baud
   if (baudRateSelect) {
     const baudRates = [9600, 57600, 115200, 230400, 460800, 921600];
     baudRates.forEach(rate => {
       const option = document.createElement('option');
       option.value = rate;
-      option.textContent = rate + ' baud';
-      if (rate === 115200) {
-        option.selected = true;
-      }
+      option.textContent = `${rate} baud`;
+      if (rate === 115200) option.selected = true;
       baudRateSelect.appendChild(option);
     });
     log('Vitesses de baud configurées', 'success');
   }
 
+  // Mise à jour des informations sur le firmware sélectionné
   function updateFirmwareInfo() {
     if (!firmwarePicker) return;
 
@@ -111,10 +96,7 @@ function initApp() {
     if (selectedFirmware && window.firmwareManifests && window.firmwareManifests[selectedFirmware]) {
       const firmware = window.firmwareManifests[selectedFirmware];
 
-      if (firmwareInfo) {
-        firmwareInfo.style.display = 'block';
-      }
-
+      if (firmwareInfo) firmwareInfo.style.display = 'block';
       if (firmwareDescription) {
         firmwareDescription.innerHTML = `
           <strong>${firmware.name}</strong><br>
@@ -122,30 +104,22 @@ function initApp() {
           ${firmware.description || ''}
         `;
       }
-
-      log('Firmware sélectionné: ' + firmware.name, 'success');
-
+      log(`Firmware sélectionné: ${firmware.name}`, 'success');
     } else {
-      if (firmwareInfo) {
-        firmwareInfo.style.display = 'none';
-      }
+      if (firmwareInfo) firmwareInfo.style.display = 'none';
     }
   }
 
+  // Initialisation des informations sur le firmware
   updateFirmwareInfo();
-
-  if (firmwarePicker) {
-    firmwarePicker.addEventListener('change', updateFirmwareInfo);
-  }
+  if (firmwarePicker) firmwarePicker.addEventListener('change', updateFirmwareInfo);
 
   // Fonction pour charger un fichier binaire
   async function loadBinaryFile(filepath) {
     try {
       log(`Téléchargement: ${filepath}...`);
       const response = await fetch(filepath);
-      if (!response.ok) {
-        throw new Error(`Fichier introuvable: ${filepath}`);
-      }
+      if (!response.ok) throw new Error(`Fichier introuvable: ${filepath}`);
       const arrayBuffer = await response.arrayBuffer();
       log(`✓ ${filepath} chargé (${arrayBuffer.byteLength} octets)`, 'success');
       return arrayBuffer;
@@ -155,16 +129,17 @@ function initApp() {
     }
   }
 
+  // Gestion de la connexion/déconnexion
   if (connectButton) {
     connectButton.addEventListener('click', async function() {
       if (!isConnected) {
-        // CONNEXION
+        // Connexion
         try {
           log('Sélection du port série...');
 
-          // Vérifier que esptool-js est chargé
-          if (typeof esptoolPackage === 'undefined') {
-            throw new Error('esptool-js n\'est pas chargé. Vérifiez que le CDN est accessible.');
+          // Vérification de la disponibilité d'esptool-js
+          if (typeof esptool === 'undefined') {
+            throw new Error('esptool-js n\'est pas chargé. Vérifiez le CDN ou votre connexion internet.');
           }
 
           port = await navigator.serial.requestPort();
@@ -172,51 +147,46 @@ function initApp() {
 
           log(`Connexion en cours à ${baudRate} baud...`);
 
-          // Créer le transport
-          transport = new esptoolPackage.Transport(port);
-
-          // Créer l'instance ESPLoader
-          esploader = new esptoolPackage.ESPLoader({
+          // Initialisation du transport et de l'ESPLoader
+          transport = new esptool.Transport(port);
+          esploader = new esptool.ESPLoader({
             transport: transport,
             baudrate: baudRate,
             terminal: espLoaderTerminal
           });
 
-          // Se connecter et détecter le chip
+          // Connexion et détection du chip
           log('Détection du chip ESP...');
           chip = await esploader.main();
 
           isConnected = true;
-          connectButton.textContent = 'Disconnect';
+          connectButton.textContent = 'Déconnecter';
           connectButton.style.backgroundColor = '#c64141';
           connectButton.style.borderColor = '#900';
 
-          // Activer les boutons
           if (programButton) programButton.disabled = false;
           if (eraseButton) eraseButton.disabled = false;
 
-          log('═══════════════════════════════════════', 'success');
+          log('═══════════════════════════════════════');
           log(`✅ CONNECTÉ AVEC SUCCÈS`, 'success');
           log(`Chip: ${chip}`, 'success');
           const macAddr = await esploader.chipName();
           log(`MAC: ${macAddr}`, 'success');
-          log('═══════════════════════════════════════', 'success');
+          log('═══════════════════════════════════════');
 
         } catch (error) {
-          log('Erreur de connexion: ' + error.message, 'error');
+          log(`Erreur de connexion: ${error.message}`, 'error');
           console.error(error);
           isConnected = false;
 
-          // Suggestions
-          if (error.message.includes('esptool-js')) {
+          if (error.message.includes('esptool')) {
             log('💡 Vérifiez votre connexion internet (CDN esptool-js)', 'warning');
           } else if (error.message.includes('Failed to open')) {
             log('💡 Fermez Arduino IDE / PlatformIO / moniteurs série', 'warning');
           }
         }
-
       } else {
-        // DÉCONNEXION
+        // Déconnexion
         try {
           log('Déconnexion...');
 
@@ -231,24 +201,24 @@ function initApp() {
           transport = null;
           chip = null;
 
-          connectButton.textContent = 'Connect';
+          connectButton.textContent = 'Connecter';
           connectButton.style.backgroundColor = '#000';
           connectButton.style.borderColor = '#fff';
 
-          // Désactiver les boutons
           if (programButton) programButton.disabled = true;
           if (eraseButton) eraseButton.disabled = true;
 
           log('Déconnecté', 'success');
 
         } catch (error) {
-          log('Erreur de déconnexion: ' + error.message, 'error');
+          log(`Erreur de déconnexion: ${error.message}`, 'error');
           console.error(error);
         }
       }
     });
   }
 
+  // Gestion de la programmation du firmware
   if (programButton) {
     programButton.addEventListener('click', async function() {
       if (!isConnected || !esploader) {
@@ -274,7 +244,7 @@ function initApp() {
         log('═══════════════════════════════════════');
         log('🚀 DÉBUT DE LA PROGRAMMATION');
         log('═══════════════════════════════════════');
-        log('Firmware: ' + firmware.name + ' v' + firmware.version);
+        log(`Firmware: ${firmware.name} v${firmware.version}`);
 
         if (!firmware.builds || !firmware.builds[0] || !firmware.builds[0].parts) {
           throw new Error('Configuration du firmware invalide');
@@ -283,7 +253,7 @@ function initApp() {
         const parts = firmware.builds[0].parts;
         log(`Fichiers à flasher: ${parts.length}`);
 
-        // Charger tous les fichiers binaires
+        // Chargement des fichiers binaires
         const fileArray = [];
         for (let i = 0; i < parts.length; i++) {
           const part = parts[i];
@@ -316,7 +286,7 @@ function initApp() {
           }
         };
 
-        // FLASHER !
+        // Flashage
         await esploader.writeFlash(flashOptions);
 
         log('═══════════════════════════════════════');
@@ -324,7 +294,7 @@ function initApp() {
         log('═══════════════════════════════════════');
         log('Reset de l\'ESP32...');
 
-        // Reset
+        // Reset de l'ESP32
         await esploader.hardReset();
 
         log('✅ ESP32 redémarré avec le nouveau firmware', 'success');
@@ -334,10 +304,10 @@ function initApp() {
         log('═══════════════════════════════════════');
         log('❌ ERREUR DE PROGRAMMATION', 'error');
         log('═══════════════════════════════════════');
-        log('Erreur: ' + error.message, 'error');
+        log(`Erreur: ${error.message}`, 'error');
         console.error(error);
       } finally {
-        // Réactiver les boutons
+        // Réactivation des boutons
         programButton.disabled = false;
         eraseButton.disabled = false;
         connectButton.disabled = false;
@@ -345,6 +315,7 @@ function initApp() {
     });
   }
 
+  // Gestion de l'effacement de la flash
   if (eraseButton) {
     eraseButton.addEventListener('click', async function() {
       if (!isConnected || !esploader) {
@@ -363,7 +334,7 @@ function initApp() {
         return;
       }
 
-      // Désactiver les boutons
+      // Désactivation des boutons
       programButton.disabled = true;
       eraseButton.disabled = true;
       connectButton.disabled = true;
@@ -386,10 +357,10 @@ function initApp() {
         log('═══════════════════════════════════════');
         log('❌ ERREUR D\'EFFACEMENT', 'error');
         log('═══════════════════════════════════════');
-        log('Erreur: ' + error.message, 'error');
+        log(`Erreur: ${error.message}`, 'error');
         console.error(error);
       } finally {
-        // Réactiver les boutons
+        // Réactivation des boutons
         programButton.disabled = false;
         eraseButton.disabled = false;
         connectButton.disabled = false;
@@ -397,5 +368,8 @@ function initApp() {
     });
   }
 
-  console.log('Initialisation terminée ✓');
-}
+  log('═══════════════════════════════════════');
+  log('Connectez votre carte');
+  log('═══════════════════════════════════════');
+  log('Initialisation terminée ✓');
+});
