@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <title>Beyou Flash Utility</title>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script>
-      // Redirect to HTTPS if HTTP is requested.
+      // Redirection vers HTTPS si nécessaire
       if (
         window.location.hostname !== "localhost" &&
         window.location.protocol === "http:"
@@ -14,45 +14,42 @@
         window.location.href = "https:" + window.location.href.substring(5);
       }
     </script>
+    <!-- Suppression des doublons -->
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/esptool-js@0.4.3/bundle.min.js"></script>
     <link rel="stylesheet" href="https://use.typekit.net/qtk5kiq.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/light.css" id="light" class="alternate" disabled />
     <link rel="stylesheet" href="css/dark.css" id="dark" class="alternate" disabled />
-      <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/esptool-js@0.4.3/bundle.min.js"></script>
-  <link rel="stylesheet" href="https://use.typekit.net/qtk5kiq.css" />
+    <!-- Ajout du favicon -->
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
   </head>
   <body>
     <header class="header">
       <div class="left">
-        <img src="assets/logo.jpeg" class="Logo">
+        <!-- Vérification du chemin -->
+        <img src="assets/logo.jpeg" class="Logo" alt="Logo" />
       </div>
       <div class="right">
         <select id="baudRate"></select>
         <button id="butConnect" type="button">Connect</button>
       </div>
     </header>
-    
+
     <main class="main">
       <div id="notSupported" class="notSupported" style="display: none;">
-        Sorry, <b>Web Serial</b> is not supported on this device, make sure
-        you're running Chrome 89 or later.
+        Désolé, <b>Web Serial</b> n'est pas supporté sur cet appareil. Assurez-vous d'utiliser Chrome 89 ou une version ultérieure.
       </div>
-      
+
       <div class="subheader">
-        <center><div class="title left">SFA Flasher</div></center>
-        <div class="right">
-          </div>
-          </div>
-        </div>
+        <div class="title left">SFA Flasher</div>
       </div>
 
       <div class="content">
         <div class="firmware-selector">
           <h2>Sélectionner un firmware</h2>
           <select id="firmware-picker">
-          <option value="mon-firmware-custom" selected>SFA Production</option>
+            <option value="mon-firmware-custom" selected>SFA Production</option>
           </select>
           <div id="firmware-info" style="margin-top: 20px; display: none;">
             <p id="firmware-description"></p>
@@ -75,6 +72,7 @@
       <p>© 2026</p>
     </footer>
 
+    <!-- Manifest des firmwares -->
     <script>
       window.firmwareManifests = {
         "mon-firmware-custom": {
@@ -97,6 +95,7 @@
       };
     </script>
 
-    <script src="js/script.js"></script>
+    <!-- Chargement du script en tant que module -->
+    <script type="module" src="js/script.js"></script>
   </body>
 </html>
