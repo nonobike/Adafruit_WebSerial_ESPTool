@@ -1,4 +1,9 @@
+// Script principal avec intégration esptool-js
 console.log('Script chargé');
+
+// Variables globales pour esptool
+let esploader = null;
+let chip = null;
 
 window.addEventListener('load', function() {
   console.log('Window load event');
@@ -49,6 +54,7 @@ function initApp() {
     if (type === 'error') prefix = '❌';
     else if (type === 'warning') prefix = '⚠️';
     else if (type === 'success') prefix = '✅';
+    else if (type === 'progress') prefix = '📊';
 
     const logMessage = `[${timestamp}] ${prefix} ${message}`;
 
@@ -60,7 +66,27 @@ function initApp() {
     console.log(logMessage);
   }
 
-  log('Attente de connexion');
+  // Terminal pour esptool-js
+  const espLoaderTerminal = {
+    clean() {
+      if (consoleElement) {
+        consoleElement.textContent = '';
+      }
+    },
+    writeLine(data) {
+      log(data);
+    },
+    write(data) {
+      if (consoleElement) {
+        consoleElement.textContent += data;
+        consoleElement.scrollTop = consoleElement.scrollHeight;
+      }
+    }
+  };
+
+  log('═══════════════════════════════════════');
+  log('Connectez votre carte');
+  log('═══════════════════════════════════════');
 
   if (baudRateSelect) {
     const baudRates = [9600, 57600, 115200, 230400, 460800, 921600];
@@ -73,6 +99,7 @@ function initApp() {
       }
       baudRateSelect.appendChild(option);
     });
+    log('Vitesses de baud configurées', 'success');
   }
 
   function updateFirmwareInfo() {
@@ -97,6 +124,8 @@ function initApp() {
         `;
       }
 
+      log('Firmware sélectionné: ' + firmware.name, 'success');
+
     } else {
       if (firmwareInfo) {
         firmwareInfo.style.display = 'none';
@@ -117,11 +146,28 @@ function initApp() {
         try {
           log('Sélection du port série...');
 
+          // Demander le port
           port = await navigator.serial.requestPort();
 
           const baudRate = baudRateSelect ? parseInt(baudRateSelect.value) : 115200;
 
-          await port.open({ baudRate: baudRate });
+          log(`Connexion en cours à ${baudRate} baud...`);
+
+          // Vérifier que esptool-js est chargé
+          if (typeof esptoolPackage === 'undefined') {
+            throw new Error('esptool-js n\'est pas chargé. Vérifiez que le CDN est accessible.');
+          }
+
+          // Créer l'instance ESPLoader
+          esploader = new esptoolPackage.ESPLoader({
+            transport: new esptoolPackage.Transport(port),
+            baudrate: baudRate,
+            terminal: espLoaderTerminal
+          });
+
+          // Se connecter et détecter le chip
+          log('Détection du chip ESP...');
+          chip = await esploader.main();
 
           isConnected = true;
           connectButton.textContent = 'Disconnect';
@@ -132,11 +178,28 @@ function initApp() {
           if (programButton) programButton.disabled = false;
           if (eraseButton) eraseButton.disabled = false;
 
-          log(`Connecté au port série (${baudRate} baud)`, 'success');
+          log(`Connecté avec succès!`, 'success');
+          log(`Chip détecté: ${chip}`, 'success');
+          
+          // Afficher l'adresse MAC si disponible
+          try {
+            const macAddr = await esploader.chipName();
+            log(`MAC Address: ${macAddr}`, 'success');
+          } catch (e) {
+            // Ignorer si non disponible
+          }
 
         } catch (error) {
           log('Erreur de connexion: ' + error.message, 'error');
           console.error(error);
+          isConnected = false;
+          
+          // Suggestions
+          if (error.message.includes('esptool-js')) {
+            log('💡 Vérifiez votre connexion internet (CDN esptool-js)', 'warning');
+          } else if (error.message.includes('Failed to open')) {
+            log('💡 Fermez Arduino IDE ou tout moniteur série', 'warning');
+          }
         }
 
       } else {
@@ -144,12 +207,16 @@ function initApp() {
         try {
           log('Déconnexion...');
 
-          if (port) {
-            await port.close();
+          if (esploader) {
+            await esploader.hardReset();
+            await esploader.disconnect();
           }
 
           isConnected = false;
           port = null;
+          esploader = null;
+          chip = null;
+          
           connectButton.textContent = 'Connect';
           connectButton.style.backgroundColor = '#000';
           connectButton.style.borderColor = '#fff';
@@ -168,9 +235,26 @@ function initApp() {
     });
   }
 
+  // Fonction pour charger un fichier binaire
+  async function loadBinaryFile(filepath) {
+    try {
+      log(`Chargement de ${filepath}...`);
+      const response = await fetch(filepath);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${filepath}`);
+      }
+      const data = await response.arrayBuffer();
+      log(`✓ ${filepath.split('/').pop()} chargé (${(data.byteLength / 1024).toFixed(1)} Ko)`, 'success');
+      return data;
+    } catch (error) {
+      log(`Erreur: ${error.message}`, 'error');
+      throw error;
+    }
+  }
+
   if (programButton) {
     programButton.addEventListener('click', async function() {
-      if (!isConnected) {
+      if (!isConnected || !esploader) {
         log('Erreur: Connectez-vous d\'abord à l\'ESP32', 'error');
         return;
       }
@@ -184,26 +268,116 @@ function initApp() {
 
       const firmware = window.firmwareManifests[selectedFirmware];
 
-      log('═══════════════════════════════════════');
-      log('Début de la programmation');
-      log('Firmware: ' + firmware.name + ' v' + firmware.version);
-      log('═══════════════════════════════════════');
+      // Désactiver les boutons pendant le flashage
+      programButton.disabled = true;
+      eraseButton.disabled = true;
+      connectButton.disabled = true;
 
-      if (firmware.builds && firmware.builds[0] && firmware.builds[0].parts) {
-        log('Fichiers à flasher:');
-        firmware.builds[0].parts.forEach((part, index) => {
-          log(`  ${index + 1}. ${part.path} @ 0x${part.offset.toString(16).toUpperCase()}`);
-        });
+      try {
+        log('═══════════════════════════════════════');
+        log('🚀 DÉBUT DE LA PROGRAMMATION');
+        log('═══════════════════════════════════════');
+        log('Firmware: ' + firmware.name + ' v' + firmware.version);
+
+        // Vérifier la configuration
+        if (!firmware.builds || !firmware.builds[0] || !firmware.builds[0].parts) {
+          throw new Error('Configuration du firmware invalide');
+        }
+
+        const parts = firmware.builds[0].parts;
+        log(`Nombre de fichiers: ${parts.length}`);
+        log('');
+
+        // Charger tous les fichiers
+        log('📦 Chargement des fichiers...');
+        const fileArray = [];
+        
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          log(`[${i + 1}/${parts.length}] ${part.path} @ 0x${part.offset.toString(16).toUpperCase()}`);
+          const data = await loadBinaryFile(part.path);
+          fileArray.push({
+            data: data,
+            address: part.offset
+          });
+        }
+
+        log('');
+        log('✅ Tous les fichiers chargés avec succès', 'success');
+        log('═══════════════════════════════════════');
+        log('📝 Écriture de la flash...');
+        log('⚠️  NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
+        log('═══════════════════════════════════════');
+        log('');
+
+        // Options de flashage
+        const flashOptions = {
+          fileArray: fileArray,
+          flashSize: "keep",
+          flashMode: "keep",
+          flashFreq: "keep",
+          eraseAll: false,
+          compress: true,
+          reportProgress: (fileIndex, written, total) => {
+            const percent = Math.floor((written / total) * 100);
+            const fileName = parts[fileIndex].path.split('/').pop();
+            const writtenKb = (written / 1024).toFixed(1);
+            const totalKb = (total / 1024).toFixed(1);
+            
+            // Afficher seulement à certains intervalles pour éviter de surcharger la console
+            if (percent % 10 === 0 || percent === 100) {
+              log(`[${fileIndex + 1}/${parts.length}] ${fileName}: ${percent}% (${writtenKb}/${totalKb} Ko)`, 'progress');
+            }
+          },
+          calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.lib.WordArray.create(image))
+        };
+
+        // Flasher !
+        await esploader.writeFlash(flashOptions);
+
+        log('');
+        log('═══════════════════════════════════════');
+        log('✅ PROGRAMMATION TERMINÉE !', 'success');
+        log('═══════════════════════════════════════');
+        log('Reset de l\'ESP32...');
+
+        // Reset hard
+        await esploader.hardReset();
+
+        log('');
+        log('🎉 Succès total !', 'success');
+        log('L\'ESP32 redémarre avec le nouveau firmware');
+        log('Vous pouvez maintenant débrancher l\'ESP32');
+        log('');
+
+      } catch (error) {
+        log('');
+        log('═══════════════════════════════════════');
+        log('❌ ERREUR DE PROGRAMMATION', 'error');
+        log('═══════════════════════════════════════');
+        log('Erreur: ' + error.message, 'error');
+        log('');
+        
+        // Messages d'aide selon le type d'erreur
+        if (error.message.includes('HTTP 404')) {
+          log('💡 Vérifiez que les fichiers .bin existent dans le dossier firmwares/', 'warning');
+        } else if (error.message.includes('timeout')) {
+          log('💡 Essayez de débrancher et rebrancher l\'ESP32', 'warning');
+        }
+        
+        console.error(error);
+      } finally {
+        // Réactiver les boutons
+        programButton.disabled = false;
+        eraseButton.disabled = false;
+        connectButton.disabled = false;
       }
-
-      log('⚠️ Intégration esptool.js nécessaire', 'warning');
-      log('Fonctionnalité en développement');
     });
   }
 
   if (eraseButton) {
     eraseButton.addEventListener('click', async function() {
-      if (!isConnected) {
+      if (!isConnected || !esploader) {
         log('Erreur: Connectez-vous d\'abord à l\'ESP32', 'error');
         return;
       }
@@ -214,12 +388,46 @@ function initApp() {
         'Cette action est IRRÉVERSIBLE !'
       );
 
-      if (confirmed) {
+      if (!confirmed) {
+        log('Effacement annulé');
+        return;
+      }
+
+      // Désactiver les boutons
+      programButton.disabled = true;
+      eraseButton.disabled = true;
+      connectButton.disabled = true;
+
+      try {
         log('═══════════════════════════════════════');
-        log('Effacement de la flash');
+        log('🗑️  EFFACEMENT DE LA FLASH');
         log('═══════════════════════════════════════');
-        log('⚠️ Intégration esptool.js nécessaire', 'warning');
-        log('Fonctionnalité en développement');
+        log('⚠️  NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
+        log('Cela peut prendre jusqu\'à 30 secondes...');
+        log('');
+
+        await esploader.eraseFlash();
+
+        log('');
+        log('═══════════════════════════════════════');
+        log('✅ FLASH EFFACÉE AVEC SUCCÈS !', 'success');
+        log('═══════════════════════════════════════');
+        log('L\'ESP32 est maintenant vierge');
+        log('Vous pouvez flasher un nouveau firmware');
+        log('');
+
+      } catch (error) {
+        log('');
+        log('═══════════════════════════════════════');
+        log('❌ ERREUR D\'EFFACEMENT', 'error');
+        log('═══════════════════════════════════════');
+        log('Erreur: ' + error.message, 'error');
+        console.error(error);
+      } finally {
+        // Réactiver les boutons
+        programButton.disabled = false;
+        eraseButton.disabled = false;
+        connectButton.disabled = false;
       }
     });
   }
