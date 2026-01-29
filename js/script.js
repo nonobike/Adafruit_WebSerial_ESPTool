@@ -148,12 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
           log(`Connexion en cours à ${baudRate} baud...`);
 
           // Initialisation du transport et de l'ESPLoader
-          transport = new esptool.Transport(port);
-          esploader = new esptool.ESPLoader({
-            transport: transport,
-            baudrate: baudRate,
-            terminal: espLoaderTerminal
-          });
+transport = new window.esptool.Transport(port);
+esploader = new window.esptool.ESPLoader({ ... });
 
           // Connexion et détection du chip
           log('Détection du chip ESP...');
