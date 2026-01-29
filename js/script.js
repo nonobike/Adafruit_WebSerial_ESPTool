@@ -150,7 +150,7 @@ esploader = new window.esptool.ESPLoader({
           if (programButton) programButton.disabled = false;
           if (eraseButton) eraseButton.disabled = false;
 
-          log(`✅ CONNECTÉ AVEC SUCCÈS`, 'success');
+          log(`CONNECTÉ AVEC SUCCÈS`, 'success');
           log(`Chip: ${chip}`, 'success');
           const macAddr = await esploader.chipName();
           log(`MAC: ${macAddr}`, 'success');
@@ -241,7 +241,7 @@ esploader = new window.esptool.ESPLoader({
 
         log('Tous les fichiers sont chargés ✓', 'success');
         log('📝 Écriture de la flash...');
-        log('⚠️ NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
+        log('NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
 
         const flashOptions = {
           fileArray: fileArray,
@@ -259,16 +259,16 @@ esploader = new window.esptool.ESPLoader({
 
         await esploader.writeFlash(flashOptions);
 
-        log('✅ PROGRAMMATION TERMINÉE !', 'success');
+        log('PROGRAMMATION TERMINÉE !', 'success');
         log('Reset de l\'ESP32...');
 
         await esploader.hardReset();
 
-        log('✅ ESP32 redémarré avec le nouveau firmware', 'success');
+        log('ESP32 redémarré avec le nouveau firmware', 'success');
         log('Vous pouvez débrancher l\'ESP32', 'success');
 
       } catch (error) {
-        log('❌ ERREUR DE PROGRAMMATION', 'error');
+        log('ERREUR DE PROGRAMMATION', 'error');
         log(`Erreur: ${error.message}`, 'error');
         console.error(error);
       } finally {
@@ -303,15 +303,15 @@ esploader = new window.esptool.ESPLoader({
 
       try {
         log('🗑️  EFFACEMENT DE LA FLASH');
-        log('⚠️ NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
+        log('NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
 
         await esploader.eraseFlash();
 
-        log('✅ FLASH EFFACÉE AVEC SUCCÈS !', 'success');
+        log('FLASH EFFACÉE AVEC SUCCÈS !', 'success');
         log('L\'ESP32 est maintenant vierge');
 
       } catch (error) {
-        log('❌ ERREUR D\'EFFACEMENT', 'error');
+        log('ERREUR D\'EFFACEMENT', 'error');
         log(`Erreur: ${error.message}`, 'error');
         console.error(error);
       } finally {
