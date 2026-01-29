@@ -14,14 +14,15 @@
         window.location.href = "https:" + window.location.href.substring(5);
       }
     </script>
-    <!-- Suppression des doublons -->
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/esptool-js@0.4.3/bundle.min.js"></script>
+<script type="module">
+  import { Transport, ESPLoader } from 'https://cdn.jsdelivr.net/npm/esptool-js@0.4.3/+esm';
+  window.esptool = { Transport, ESPLoader }; // Expose les objets globalement
+</script>
     <link rel="stylesheet" href="https://use.typekit.net/qtk5kiq.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/light.css" id="light" class="alternate" disabled />
     <link rel="stylesheet" href="css/dark.css" id="dark" class="alternate" disabled />
-    <!-- Ajout du favicon -->
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
   </head>
   <body>
