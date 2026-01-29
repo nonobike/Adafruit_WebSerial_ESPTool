@@ -149,7 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
           // Initialisation du transport et de l'ESPLoader
 transport = new window.esptool.Transport(port);
-esploader = new window.esptool.ESPLoader({ ... });
+esploader = new window.esptool.ESPLoader({
+  transport: transport,
+  baudrate: baudRate,
+  terminal: espLoaderTerminal
+});
+
 
           // Connexion et détection du chip
           log('Détection du chip ESP...');
