@@ -98,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
   updateFirmwareInfo();
   if (firmwarePicker) firmwarePicker.addEventListener('change', updateFirmwareInfo);
 
-// Fonction pour charger un fichier binaire
 async function loadBinaryFile(filepath) {
   try {
     log(`Téléchargement: ${filepath}...`);
@@ -107,7 +106,6 @@ async function loadBinaryFile(filepath) {
       throw new Error(`Fichier introuvable: ${filepath}`);
     }
     
-    // IMPORTANT: Convertir en Uint8Array au lieu d'ArrayBuffer
     const arrayBuffer = await response.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
     
@@ -228,20 +226,21 @@ if (transport) {
 
         const parts = firmware.builds[0].parts;
         log(`Fichiers à flasher: ${parts.length}`);
-
-// Charger tous les fichiers binaires
+        
 const fileArray = [];
 for (let i = 0; i < parts.length; i++) {
   const part = parts[i];
-  log(`[${i + 1}/${parts.length}] ${part.path} @ 0x${part.offset.toString(16).toUpperCase()}`);
+  log(`[${i + 1}/${parts.length}] Préparation de ${part.path}...`);
+
   const data = await loadBinaryFile(part.path);
-  
+
+  const uint8Data = data instanceof Uint8Array ? data : new Uint8Array(data);
+
   fileArray.push({
-    data: data,  // data est maintenant un Uint8Array
+    data: uint8Data,  
     address: part.offset
   });
 }
-
         log('Tous les fichiers sont chargés ✓', 'success');
         log('📝 Écriture de la flash...');
         log('NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
