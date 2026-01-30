@@ -98,19 +98,26 @@ document.addEventListener('DOMContentLoaded', function() {
   updateFirmwareInfo();
   if (firmwarePicker) firmwarePicker.addEventListener('change', updateFirmwareInfo);
 
-  async function loadBinaryFile(filepath) {
-    try {
-      log(`Téléchargement: ${filepath}...`);
-      const response = await fetch(filepath);
-      if (!response.ok) throw new Error(`Fichier introuvable: ${filepath}`);
-      const arrayBuffer = await response.arrayBuffer();
-      log(`✓ ${filepath} chargé (${arrayBuffer.byteLength} octets)`, 'success');
-      return arrayBuffer;
-    } catch (error) {
-      log(`Erreur de chargement: ${error.message}`, 'error');
-      throw error;
+// Fonction pour charger un fichier binaire
+async function loadBinaryFile(filepath) {
+  try {
+    log(`Téléchargement: ${filepath}...`);
+    const response = await fetch(filepath);
+    if (!response.ok) {
+      throw new Error(`Fichier introuvable: ${filepath}`);
     }
+    
+    // IMPORTANT: Convertir en Uint8Array au lieu d'ArrayBuffer
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    log(`✓ ${filepath} chargé (${uint8Array.length} octets)`, 'success');
+    return uint8Array;  // Retourner Uint8Array, pas ArrayBuffer
+  } catch (error) {
+    log(`Erreur de chargement: ${error.message}`, 'error');
+    throw error;
   }
+}
 
   if (connectButton) {
     connectButton.addEventListener('click', async function() {
@@ -222,16 +229,18 @@ if (transport) {
         const parts = firmware.builds[0].parts;
         log(`Fichiers à flasher: ${parts.length}`);
 
-        const fileArray = [];
-        for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
-          log(`[${i + 1}/${parts.length}] ${part.path} @ 0x${part.offset.toString(16).toUpperCase()}`);
-          const data = await loadBinaryFile(part.path);
-          fileArray.push({
-            data: data,
-            address: part.offset
-          });
-        }
+// Charger tous les fichiers binaires
+const fileArray = [];
+for (let i = 0; i < parts.length; i++) {
+  const part = parts[i];
+  log(`[${i + 1}/${parts.length}] ${part.path} @ 0x${part.offset.toString(16).toUpperCase()}`);
+  const data = await loadBinaryFile(part.path);
+  
+  fileArray.push({
+    data: data,  // data est maintenant un Uint8Array
+    address: part.offset
+  });
+}
 
         log('Tous les fichiers sont chargés ✓', 'success');
         log('📝 Écriture de la flash...');
