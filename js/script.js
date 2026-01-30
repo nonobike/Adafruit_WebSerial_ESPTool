@@ -252,7 +252,7 @@ for (let i = 0; i < parts.length; i++) {
           flashMode: "keep",
           flashFreq: "keep",
           eraseAll: false,
-          compress: true,
+          compress: false,
           reportProgress: (fileIndex, written, total) => {
             const percent = Math.floor((written / total) * 100);
             const fileName = parts[fileIndex].path.split('/').pop();
