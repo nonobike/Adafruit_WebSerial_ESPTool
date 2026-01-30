@@ -105,17 +105,23 @@ async function loadBinaryFile(filepath) {
     if (!response.ok) {
       throw new Error(`Fichier introuvable: ${filepath}`);
     }
-    
+
     const arrayBuffer = await response.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    
+
+    // Vérification de l'intégrité des données
+    if (uint8Array.length === 0) {
+      throw new Error(`Fichier vide: ${filepath}`);
+    }
+
     log(`✓ ${filepath} chargé (${uint8Array.length} octets)`, 'success');
-    return uint8Array;  // Retourner Uint8Array, pas ArrayBuffer
+    return uint8Array;
   } catch (error) {
     log(`Erreur de chargement: ${error.message}`, 'error');
     throw error;
   }
 }
+
 
   if (connectButton) {
     connectButton.addEventListener('click', async function() {
@@ -226,21 +232,29 @@ if (transport) {
 
         const parts = firmware.builds[0].parts;
         log(`Fichiers à flasher: ${parts.length}`);
-        
-const fileArray = [];
+
+        const fileArray = [];
 for (let i = 0; i < parts.length; i++) {
   const part = parts[i];
   log(`[${i + 1}/${parts.length}] Préparation de ${part.path}...`);
 
   const data = await loadBinaryFile(part.path);
 
-  const uint8Data = data instanceof Uint8Array ? data : new Uint8Array(data);
+  // Vérification supplémentaire du format
+  if (!(data instanceof Uint8Array)) {
+    throw new Error(`Format de données invalide pour ${part.path}`);
+  }
+
+  // Conversion explicite en tableau d'octets
+  const byteArray = Array.from(data);
 
   fileArray.push({
-    data: uint8Data,  
+    data: byteArray,  // Utilisation d'un tableau d'octets
     address: part.offset
   });
 }
+
+
         log('Tous les fichiers sont chargés ✓', 'success');
         log('📝 Écriture de la flash...');
         log('NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
