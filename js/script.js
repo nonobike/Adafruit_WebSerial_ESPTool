@@ -109,7 +109,6 @@ async function loadBinaryFile(filepath) {
     const arrayBuffer = await response.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    // Vérification de l'intégrité des données
     if (uint8Array.length === 0) {
       throw new Error(`Fichier vide: ${filepath}`);
     }
@@ -121,6 +120,7 @@ async function loadBinaryFile(filepath) {
     throw error;
   }
 }
+
 
 
   if (connectButton) {
@@ -240,16 +240,18 @@ for (let i = 0; i < parts.length; i++) {
 
   const data = await loadBinaryFile(part.path);
 
-  // Vérification supplémentaire du format
   if (!(data instanceof Uint8Array)) {
     throw new Error(`Format de données invalide pour ${part.path}`);
   }
 
-  // Conversion explicite en tableau d'octets
-  const byteArray = Array.from(data);
+  // Convertir explicitement en tableau d'octets
+  const byteArray = [];
+  for (let j = 0; j < data.length; j++) {
+    byteArray.push(data[j]);
+  }
 
   fileArray.push({
-    data: byteArray,  // Utilisation d'un tableau d'octets
+    data: byteArray,
     address: part.offset
   });
 }
