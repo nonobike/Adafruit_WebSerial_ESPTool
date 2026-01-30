@@ -82,10 +82,10 @@
           new_install_prompt_erase: true,
           builds: [
             {
-              chipFamily: "ESP32",
+              chipFamily: "ESP32-S3",
               improv: false,
               parts: [
-                { path: "firmwares/sfa/bootloader.bin", offset: 0x1000 },
+                { path: "firmwares/sfa/bootloader.bin", offset: 0x0 },
                 { path: "firmwares/sfa/partitions.bin", offset: 0x8000 },
                 { path: "firmwares/sfa/firmware.bin", offset: 0x10000 }
               ]
