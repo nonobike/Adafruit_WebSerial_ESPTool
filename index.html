@@ -15,20 +15,45 @@
       }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
-<script type="module">
-  import { Transport, ESPLoader } from 'https://cdn.jsdelivr.net/npm/esptool-js@0.4.3/+esm';
-  window.esptool = { Transport, ESPLoader }; // Expose les objets globalement
-</script>
+    <script type="module">
+      import { Transport, ESPLoader } from 'https://cdn.jsdelivr.net/npm/esptool-js@0.4.3/+esm';
+      window.esptool = { Transport, ESPLoader };
+    </script>
     <link rel="stylesheet" href="https://use.typekit.net/qtk5kiq.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/light.css" id="light" class="alternate" disabled />
     <link rel="stylesheet" href="css/dark.css" id="dark" class="alternate" disabled />
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <style>
+
+      button {
+        padding: 12px 20px;
+        font-size: 16px;
+        margin: 8px;
+        min-width: 120px;
+      }
+      select {
+        padding: 10px;
+        font-size: 16px;
+        width: 100%;
+        max-width: 300px;
+      }
+      .console {
+        font-size: 14px;
+        min-height: 150px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 10px;
+        overflow-y: auto;
+      }
+      .firmware-selector, .program-section {
+        margin-bottom: 20px;
+      }
+    </style>
   </head>
   <body>
     <header class="header">
       <div class="left">
-        <!-- Vérification du chemin -->
         <img src="assets/logo.jpeg" class="Logo" alt="Logo" />
       </div>
       <div class="right">
@@ -50,10 +75,11 @@
         <div class="firmware-selector">
           <h2>Sélectionner un firmware</h2>
           <select id="firmware-picker">
-            <option value="mon-firmware-custom" selected>SFA Production</option>
+            <option value="sfa" selected>SFA Production</option>
+            <option value="cyd">CYD Développement</option>
           </select>
-          <div id="firmware-info" style="margin-top: 20px; display: none;">
-            <p id="firmware-description"></p>
+          <div id="firmware-info" style="margin-top: 20px;">
+            <p id="firmware-description">Firmware sélectionné : <strong>SFA Production</strong> (Version : 1.9.0)</p>
           </div>
         </div>
 
@@ -73,11 +99,10 @@
       <p>© 2026</p>
     </footer>
 
-    <!-- Manifest des firmwares -->
     <script>
       window.firmwareManifests = {
-        "mon-firmware-custom": {
-          name: "Informations :",
+        "sfa": {
+          name: "SFA Production",
           version: "1.9.0",
           home_assistant_domain: null,
           new_install_prompt_erase: true,
@@ -86,17 +111,40 @@
               chipFamily: "ESP32",
               improv: false,
               parts: [
-                { path: "firmwares/bootloader.bin", offset: 0x1000 },
-                { path: "firmwares/partitions.bin", offset: 0x8000 },
-                { path: "firmwares/firmware.bin", offset: 0x10000 }
+                { path: "firmwares/sfa/bootloader.bin", offset: 0x1000 },
+                { path: "firmwares/sfa/partitions.bin", offset: 0x8000 },
+                { path: "firmwares/sfa/firmware.bin", offset: 0x10000 }
+              ]
+            }
+          ]
+        },
+        "cyd": {
+          name: "CYD Développement",
+          version: "1.0.0",
+          home_assistant_domain: null,
+          new_install_prompt_erase: true,
+          builds: [
+            {
+              chipFamily: "ESP32",
+              improv: false,
+              parts: [
+                { path: "firmwares/cyd/bootloader.bin", offset: 0x1000 },
+                { path: "firmwares/cyd/partitions.bin", offset: 0x8000 },
+                { path: "firmwares/cyd/firmware.bin", offset: 0x10000 }
               ]
             }
           ]
         }
       };
+
+      document.getElementById('firmware-picker').addEventListener('change', function() {
+        const selectedFirmware = this.value;
+        const firmware = window.firmwareManifests[selectedFirmware];
+        document.getElementById('firmware-description').innerHTML =
+          `Firmware sélectionné : <strong>${firmware.name}</strong> (Version : ${firmware.version})`;
+      });
     </script>
 
-    <!-- Chargement du script en tant que module -->
     <script type="module" src="js/script.js"></script>
   </body>
 </html>
