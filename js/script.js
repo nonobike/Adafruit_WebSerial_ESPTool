@@ -161,10 +161,13 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
           log('Déconnexion...');
 
-          if (esploader) {
-            await esploader.hardReset();
-            await esploader.disconnect();
-          }
+if (esploader) {
+  await esploader.hardReset();
+}
+
+if (transport) {
+  await transport.disconnect();
+}
 
           isConnected = false;
           port = null;
