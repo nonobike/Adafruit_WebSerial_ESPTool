@@ -1,14 +1,11 @@
 console.log('Script chargé');
 
-
 document.addEventListener('DOMContentLoaded', function() {
-
   let port = null;
   let isConnected = false;
   let esploader = null;
   let transport = null;
   let chip = null;
-
 
   const connectButton = document.getElementById('butConnect');
   const baudRateSelect = document.getElementById('baudRate');
@@ -26,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const notSupported = document.getElementById("notSupported");
     if (notSupported) notSupported.style.display = "none";
   }
-
 
   function log(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString();
@@ -66,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
-
   if (baudRateSelect) {
     const baudRates = [9600, 57600, 115200, 230400, 460800, 921600];
     baudRates.forEach(rate => {
@@ -92,8 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (firmwareDescription) {
         firmwareDescription.innerHTML = `
           <strong>${firmware.name}</strong><br>
-          Version: ${firmware.version}<br>
-          ${firmware.description || ''}
+          Version: ${firmware.version}
         `;
       }
     } else {
@@ -121,7 +115,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (connectButton) {
     connectButton.addEventListener('click', async function() {
       if (!isConnected) {
-        // Connexion
         try {
           if (typeof esptool === 'undefined') {
             throw new Error('esptool-js n\'est pas chargé. Vérifiez le CDN ou votre connexion internet.');
@@ -132,12 +125,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
           log(`Connexion en cours à ${baudRate} baud...`);
 
-transport = new window.esptool.Transport(port);
-esploader = new window.esptool.ESPLoader({
-  transport: transport,
-  baudrate: baudRate,
-  terminal: espLoaderTerminal
-});
+          transport = new window.esptool.Transport(port);
+          esploader = new window.esptool.ESPLoader({
+            transport: transport,
+            baudrate: baudRate,
+            terminal: espLoaderTerminal
+          });
 
           log('Détection du chip ESP...');
           chip = await esploader.main();
@@ -315,7 +308,6 @@ esploader = new window.esptool.ESPLoader({
         log(`Erreur: ${error.message}`, 'error');
         console.error(error);
       } finally {
-        // Réactivation des boutons
         programButton.disabled = false;
         eraseButton.disabled = false;
         connectButton.disabled = false;
