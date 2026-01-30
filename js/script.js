@@ -145,8 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
           log(`CONNECTÉ AVEC SUCCÈS`, 'success');
           log(`Chip: ${chip}`, 'success');
-          const macAddr = await esploader.chipName();
-          log(`MAC: ${macAddr}`, 'success');
 
         } catch (error) {
           log(`Erreur de connexion: ${error.message}`, 'error');
