@@ -98,30 +98,28 @@ document.addEventListener('DOMContentLoaded', function() {
   updateFirmwareInfo();
   if (firmwarePicker) firmwarePicker.addEventListener('change', updateFirmwareInfo);
 
-async function loadBinaryFile(filepath) {
-  try {
-    log(`Téléchargement: ${filepath}...`);
-    const response = await fetch(filepath);
-    if (!response.ok) {
-      throw new Error(`Fichier introuvable: ${filepath}`);
+  async function loadBinaryFile(filepath) {
+    try {
+      log(`Téléchargement: ${filepath}...`);
+      const response = await fetch(filepath);
+      if (!response.ok) {
+        throw new Error(`Fichier introuvable: ${filepath}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+
+      if (uint8Array.length === 0) {
+        throw new Error(`Fichier vide: ${filepath}`);
+      }
+
+      log(`✓ ${filepath} chargé (${uint8Array.length} octets)`, 'success');
+      return uint8Array;
+    } catch (error) {
+      log(`Erreur de chargement: ${error.message}`, 'error');
+      throw error;
     }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-
-    if (uint8Array.length === 0) {
-      throw new Error(`Fichier vide: ${filepath}`);
-    }
-
-    log(`✓ ${filepath} chargé (${uint8Array.length} octets)`, 'success');
-    return uint8Array;
-  } catch (error) {
-    log(`Erreur de chargement: ${error.message}`, 'error');
-    throw error;
   }
-}
-
-
 
   if (connectButton) {
     connectButton.addEventListener('click', async function() {
@@ -172,13 +170,13 @@ async function loadBinaryFile(filepath) {
         try {
           log('Déconnexion...');
 
-if (esploader) {
-  await esploader.hardReset();
-}
+          if (esploader) {
+            await esploader.hardReset();
+          }
 
-if (transport) {
-  await transport.disconnect();
-}
+          if (transport) {
+            await transport.disconnect();
+          }
 
           isConnected = false;
           port = null;
@@ -233,29 +231,24 @@ if (transport) {
         const parts = firmware.builds[0].parts;
         log(`Fichiers à flasher: ${parts.length}`);
 
+        // ✅ CORRECTION : Garder directement le Uint8Array sans conversion
         const fileArray = [];
-for (let i = 0; i < parts.length; i++) {
-  const part = parts[i];
-  log(`[${i + 1}/${parts.length}] Préparation de ${part.path}...`);
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          log(`[${i + 1}/${parts.length}] Préparation de ${part.path}...`);
 
-  const data = await loadBinaryFile(part.path);
+          const data = await loadBinaryFile(part.path);
 
-  if (!(data instanceof Uint8Array)) {
-    throw new Error(`Format de données invalide pour ${part.path}`);
-  }
+          if (!(data instanceof Uint8Array)) {
+            throw new Error(`Format de données invalide pour ${part.path}`);
+          }
 
-  // Convertir explicitement en tableau d'octets
-  const byteArray = [];
-  for (let j = 0; j < data.length; j++) {
-    byteArray.push(data[j]);
-  }
-
-  fileArray.push({
-    data: byteArray,
-    address: part.offset
-  });
-}
-
+          // Directement utiliser le Uint8Array sans conversion
+          fileArray.push({
+            data: data,
+            address: part.offset
+          });
+        }
 
         log('Tous les fichiers sont chargés ✓', 'success');
         log('📝 Écriture de la flash...');
@@ -267,7 +260,7 @@ for (let i = 0; i < parts.length; i++) {
           flashMode: "keep",
           flashFreq: "keep",
           eraseAll: false,
-          compress: false,
+          compress: true,
           reportProgress: (fileIndex, written, total) => {
             const percent = Math.floor((written / total) * 100);
             const fileName = parts[fileIndex].path.split('/').pop();
@@ -340,5 +333,5 @@ for (let i = 0; i < parts.length; i++) {
     });
   }
 
-  log('Connectez votre carte');
+  log('Connectez votre carte !');
 });
