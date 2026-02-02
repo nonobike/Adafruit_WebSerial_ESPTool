@@ -271,7 +271,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const fileName = parts[fileIndex].path.split('/').pop();
             log(`[${fileIndex + 1}/${parts.length}] ${fileName} - ${percent}%`, 'progress');
           },
-          calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.lib.WordArray.create(image))
+          calculateMD5Hash: (image) => {
+            // Convertir la string binaire en WordArray pour CryptoJS
+            const wordArray = CryptoJS.enc.Latin1.parse(image);
+            return CryptoJS.MD5(wordArray);
+          }
         };
 
         await esploader.writeFlash(flashOptions);
@@ -339,5 +343,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  log('Connectez votre carte  v0.5.6');
+  log('Connectez votre carte - md5');
 });
