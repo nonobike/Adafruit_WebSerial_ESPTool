@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const parts = firmware.builds[0].parts;
         log(`Fichiers à flasher: ${parts.length}`);
 
-        // ✅ ESPTool-JS v0.5.6 accepte directement les Uint8Array
+        // ✅ ESPTool-JS v0.5.6 nécessite une string binaire
         const fileArray = [];
         for (let i = 0; i < parts.length; i++) {
           const part = parts[i];
@@ -243,8 +243,14 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error(`Format de données invalide pour ${part.path}`);
           }
 
+          // Convertir Uint8Array en string binaire
+          let binaryString = '';
+          for (let j = 0; j < data.length; j++) {
+            binaryString += String.fromCharCode(data[j]);
+          }
+
           fileArray.push({
-            data: data,
+            data: binaryString,
             address: part.offset
           });
         }
@@ -333,5 +339,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  log('Connectez votre carte - ESPTool v0.5.6');
+  log('Connectez votre carte  v0.5.6');
 });
