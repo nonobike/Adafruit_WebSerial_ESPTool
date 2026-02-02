@@ -1,4 +1,4 @@
-console.log('Script chargé');
+console.log('Script chargé - ESPTool-JS v0.5.6');
 
 document.addEventListener('DOMContentLoaded', function() {
   let port = null;
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
           log(`Connexion en cours à ${baudRate} baud...`);
 
-          transport = new window.esptool.Transport(port);
+          transport = new window.esptool.Transport(port, true);
           esploader = new window.esptool.ESPLoader({
             transport: transport,
             baudrate: baudRate,
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const parts = firmware.builds[0].parts;
         log(`Fichiers à flasher: ${parts.length}`);
 
-        // ✅ CORRECTION : Garder directement le Uint8Array sans conversion
+        // ✅ ESPTool-JS v0.5.6 accepte directement les Uint8Array
         const fileArray = [];
         for (let i = 0; i < parts.length; i++) {
           const part = parts[i];
@@ -243,7 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error(`Format de données invalide pour ${part.path}`);
           }
 
-          // Directement utiliser le Uint8Array sans conversion
           fileArray.push({
             data: data,
             address: part.offset
@@ -265,7 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const percent = Math.floor((written / total) * 100);
             const fileName = parts[fileIndex].path.split('/').pop();
             log(`[${fileIndex + 1}/${parts.length}] ${fileName} - ${percent}%`, 'progress');
-          }
+          },
+          calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.lib.WordArray.create(image))
         };
 
         await esploader.writeFlash(flashOptions);
@@ -333,5 +333,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  log('Connectez votre carte !');
+  log('Connectez votre carte - ESPTool v0.5.6');
 });
