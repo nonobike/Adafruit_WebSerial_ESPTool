@@ -155,89 +155,89 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (programButton) {
-    programButton.addEventListener('click', async function() {
-      if (!isConnected || !esploader) {
-        log('Erreur: Connectez-vous d\'abord à l\'ESP32', 'error');
-        return;
+  programButton.addEventListener('click', async function() {
+    if (!isConnected || !esploader) {
+      log('Erreur: Connectez-vous d\'abord à l\'ESP32', 'error');
+      return;
+    }
+    const selectedFirmware = firmwarePicker ? firmwarePicker.value : null;
+    if (!selectedFirmware || !window.firmwareManifests || !window.firmwareManifests[selectedFirmware]) {
+      log('Erreur: Firmware non valide', 'error');
+      return;
+    }
+    const firmware = window.firmwareManifests[selectedFirmware];
+    programButton.disabled = true;
+    eraseButton.disabled = true;
+    connectButton.disabled = true;
+    try {
+      log('🚀 DÉBUT DE LA PROGRAMMATION');
+      log(`Firmware: ${firmware.name} v${firmware.version}`);
+      if (!firmware.builds || !firmware.builds[0] || !firmware.builds[0].parts) throw new Error('Configuration du firmware invalide');
+      const parts = firmware.builds[0].parts;
+      log(`Fichiers à flasher: ${parts.length}`);
+      const fileArray = [];
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        log(`[${i + 1}/${parts.length}] Préparation de ${part.path}...`);
+        const data = await loadBinaryFile(part.path);
+        if (!(data instanceof Uint8Array)) throw new Error(`Format de données invalide pour ${part.path}`);
+        let binaryString = '';
+        for (let j = 0; j < data.length; j++) binaryString += String.fromCharCode(data[j]);
+        fileArray.push({ data: binaryString, address: part.offset });
       }
-      const selectedFirmware = firmwarePicker ? firmwarePicker.value : null;
-      if (!selectedFirmware || !window.firmwareManifests || !window.firmwareManifests[selectedFirmware]) {
-        log('Erreur: Firmware non valide', 'error');
-        return;
-      }
-      const firmware = window.firmwareManifests[selectedFirmware];
-      programButton.disabled = true;
-      eraseButton.disabled = true;
-      connectButton.disabled = true;
+      log('Tous les fichiers sont chargés ✓', 'success');
+      log('📝 Écriture de la flash...');
+      log('NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
+      const flashOptions = {
+        fileArray: fileArray,
+        flashSize: "keep",
+        flashMode: "keep",
+        flashFreq: "keep",
+        eraseAll: false,
+        compress: true,
+        reportProgress: (fileIndex, written, total) => {
+          const percent = Math.floor((written / total) * 100);
+          const fileName = parts[fileIndex].path.split('/').pop();
+          log(`[${fileIndex + 1}/${parts.length}] ${fileName} - ${percent}%`, 'progress');
+        },
+        calculateMD5Hash: (image) => {
+          const wordArray = CryptoJS.enc.Latin1.parse(image);
+          return CryptoJS.MD5(wordArray);
+        }
+      };
+      await esploader.writeFlash(flashOptions);
+      log('PROGRAMMATION TERMINÉE !', 'success');
+      log('Reset de l\'ESP32...');
+      // Reset géré nativement par esptool-js
       try {
-        log('🚀 DÉBUT DE LA PROGRAMMATION');
-        log(`Firmware: ${firmware.name} v${firmware.version}`);
-        if (!firmware.builds || !firmware.builds[0] || !firmware.builds[0].parts) throw new Error('Configuration du firmware invalide');
-        const parts = firmware.builds[0].parts;
-        log(`Fichiers à flasher: ${parts.length}`);
-        const fileArray = [];
-        for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
-          log(`[${i + 1}/${parts.length}] Préparation de ${part.path}...`);
-          const data = await loadBinaryFile(part.path);
-          if (!(data instanceof Uint8Array)) throw new Error(`Format de données invalide pour ${part.path}`);
-          let binaryString = '';
-          for (let j = 0; j < data.length; j++) binaryString += String.fromCharCode(data[j]);
-          fileArray.push({ data: binaryString, address: part.offset });
-        }
-        log('Tous les fichiers sont chargés ✓', 'success');
-        log('📝 Écriture de la flash...');
-        log('NE DÉBRANCHEZ PAS L\'ESP32 !', 'warning');
-        const flashOptions = {
-          fileArray: fileArray,
-          flashSize: "keep",
-          flashMode: "keep",
-          flashFreq: "keep",
-          eraseAll: false,
-          compress: true,
-          reportProgress: (fileIndex, written, total) => {
-            const percent = Math.floor((written / total) * 100);
-            const fileName = parts[fileIndex].path.split('/').pop();
-            log(`[${fileIndex + 1}/${parts.length}] ${fileName} - ${percent}%`, 'progress');
-          },
-          calculateMD5Hash: (image) => {
-            const wordArray = CryptoJS.enc.Latin1.parse(image);
-            return CryptoJS.MD5(wordArray);
-          }
-        };
-        await esploader.writeFlash(flashOptions);
-        log('PROGRAMMATION TERMINÉE !', 'success');
-        log('Reset de l\'ESP32...');
-        // Gestion améliorée du reset
-        try {
-          await esploader.hardReset();
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          log('ESP32 redémarré avec le nouveau firmware', 'success');
-        } catch (error) {
-          log(`Erreur lors du reset: ${error.message}`, 'error');
-          if (port) {
-            try {
-              await port.setSignals({ dataTerminalReady: false, requestToSend: false });
-              await new Promise(resolve => setTimeout(resolve, 100));
-              await port.setSignals({ dataTerminalReady: true, requestToSend: true });
-              log('Reset manuel effectué', 'warning');
-            } catch (e) {
-              log(`Erreur lors du reset manuel: ${e.message}`, 'error');
-            }
-          }
-        }
-        log('Vous pouvez débrancher l\'ESP32', 'success');
+        await esploader.after("hard_reset");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        log('ESP32 redémarré avec le nouveau firmware', 'success');
       } catch (error) {
-        log('ERREUR DE PROGRAMMATION', 'error');
-        log(`Erreur: ${error.message}`, 'error');
-        console.error(error);
-      } finally {
-        programButton.disabled = false;
-        eraseButton.disabled = false;
-        connectButton.disabled = false;
+        log(`Erreur lors du reset: ${error.message}`, 'error');
+        if (port) {
+          try {
+            await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            await port.setSignals({ dataTerminalReady: true, requestToSend: true });
+            log('Reset manuel effectué', 'warning');
+          } catch (e) {
+            log(`Erreur lors du reset manuel: ${e.message}`, 'error');
+          }
+        }
       }
-    });
-  }
+      log('Vous pouvez débrancher l\'ESP32', 'success');
+    } catch (error) {
+      log('ERREUR DE PROGRAMMATION', 'error');
+      log(`Erreur: ${error.message}`, 'error');
+      console.error(error);
+    } finally {
+      programButton.disabled = false;
+      eraseButton.disabled = false;
+      connectButton.disabled = false;
+    }
+  });
+}
 
   if (eraseButton) {
     eraseButton.addEventListener('click', async function() {
