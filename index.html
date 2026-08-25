@@ -19,10 +19,9 @@
       import { Transport, ESPLoader } from 'https://unpkg.com/esptool-js@0.6.1/bundle.js';
       window.esptool = { Transport, ESPLoader };
     </script>
-    <link rel="stylesheet" href="https://use.typekit.net/qtk5kiq.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="css/light.css" id="light" class="alternate" disabled />
-    <link rel="stylesheet" href="css/dark.css" id="dark" class="alternate" disabled />
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
   </head>
   <body>
@@ -58,6 +57,8 @@
           <div id="firmware-info" style="margin-top: 20px;">
             <p id="firmware-description">Firmware sélectionné : <strong>PresTemp</strong> (Version : 1.X)</p>
           </div>
+          <p><br></br></p>
+          <div class="brand-sub"><a href="../">📍 - Visualisation des données</a></div>
         </div>
 
         <div class="program-section">
@@ -74,7 +75,6 @@
 
     <footer class="footer">
       <p>© 2026</p>
-          <div class="brand-sub"><a href="https://natureiot.fr/prestemp/" target="_blank" >📍​ -  Nature IOT</a></div>
     </footer>
 
     <script>
@@ -97,7 +97,6 @@
           ]
         },
 
-
         "1m": {
           name: "Mesure 1min ",
           version: "1.0",
@@ -115,7 +114,7 @@
             }
           ]
         },
-        
+
         "15m": {
           name: "Mesure 15min ",
           version: "1.0",
@@ -134,7 +133,7 @@
           ]
         },
 
-          "30m": {
+        "30m": {
           name: "Mesure 30min ",
           version: "1.0",
           home_assistant_domain: null,
@@ -152,7 +151,7 @@
           ]
         },
 
-          "60m": {
+        "60m": {
           name: "Mesure 60min ",
           version: "1.0",
           home_assistant_domain: null,
@@ -169,8 +168,6 @@
             }
           ]
         }
-
-        
       };
 
       document.getElementById('firmware-picker').addEventListener('change', function() {
