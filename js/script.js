@@ -1,4 +1,4 @@
-console.log('Script chargé - ESPTool-JS v0.5.6 (avec gestion améliorée du reset)');
+console.log('Script chargé - ESPTool-JS v0.6.1 (avec gestion améliorée du reset)');
 
 document.addEventListener('DOMContentLoaded', function() {
   let port = null;
@@ -38,6 +38,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (type === 'error') console.error(message);
     else console.log(logMessage);
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // FIX: esploader.after("hard_reset") (et l'ancien esploader.hardReset(),
+  // qui n'existe pas dans l'API ESPLoader et échouait silencieusement) ne
+  // font qu'un setRTS(false). Si RTS est déjà à false (ce qui est le cas
+  // après la séquence de connexion ROM), cet appel ne produit aucune
+  // transition électrique sur la broche EN, donc aucun reset matériel réel
+  // sur les cartes à circuit auto-reset classique (RTS/DTR, ex: CP2102/CH340
+  // /USB-CDC natif du S3). On force ici une vraie impulsion RTS true -> false.
+  async function hardResetClassic(transportInstance) {
+    if (!transportInstance) return;
+    try {
+      log('Hard resetting via RTS pin...');
+      await transportInstance.setRTS(true);
+      await sleep(100);
+      await transportInstance.setRTS(false);
+      await sleep(100);
+    } catch (e) {
+      log(`Erreur lors du hard reset RTS: ${e.message || e}`, 'error');
+    }
   }
 
   const espLoaderTerminal = {
@@ -111,6 +135,12 @@ document.addEventListener('DOMContentLoaded', function() {
           });
           log('Détection du chip ESP...');
           chip = await esploader.main();
+
+          // FIX: on force un vrai cycle RTS juste après la connexion pour
+          // garantir que le chip redémarre effectivement en mode normal
+          // (sinon il peut rester bloqué en mode téléchargement ROM).
+          await hardResetClassic(transport);
+
           isConnected = true;
           connectButton.textContent = 'Déconnecter';
           connectButton.style.backgroundColor = '#c64141';
@@ -129,11 +159,12 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         try {
           log('Déconnexion...');
-          if (esploader) {
-            // Ajout d'un délai avant le reset
-            await esploader.hardReset();
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
+          // FIX: esploader.hardReset() n'existe pas dans l'API ESPLoader et
+          // échouait silencieusement (capturé par le catch plus bas), donc
+          // aucun reset n'était réellement effectué à la déconnexion.
+          // On utilise maintenant le même cycle RTS explicite que partout
+          // ailleurs.
+          await hardResetClassic(transport);
           if (transport) await transport.disconnect();
           isConnected = false;
           port = null;
@@ -181,9 +212,11 @@ document.addEventListener('DOMContentLoaded', function() {
         log(`[${i + 1}/${parts.length}] Préparation de ${part.path}...`);
         const data = await loadBinaryFile(part.path);
         if (!(data instanceof Uint8Array)) throw new Error(`Format de données invalide pour ${part.path}`);
-        let binaryString = '';
-        for (let j = 0; j < data.length; j++) binaryString += String.fromCharCode(data[j]);
-        fileArray.push({ data: binaryString, address: part.offset });
+        // FIX: esptool-js >= 0.6.0 attend directement un Uint8Array pour
+        // "data" (breaking change de la 0.6.0 : "Use Uint8Array instead of
+        // string for write flash"). L'ancienne conversion en chaîne binaire
+        // via String.fromCharCode aurait cassé le flash avec cette version.
+        fileArray.push({ data: data, address: part.offset });
       }
       log('Tous les fichiers sont chargés ✓', 'success');
       log('📝 Écriture de la flash...');
@@ -200,32 +233,25 @@ document.addEventListener('DOMContentLoaded', function() {
           const fileName = parts[fileIndex].path.split('/').pop();
           log(`[${fileIndex + 1}/${parts.length}] ${fileName} - ${percent}%`, 'progress');
         },
+        // FIX: le paramètre "image" reçu ici est désormais un Uint8Array
+        // (et non plus une chaîne Latin1). CryptoJS.enc.Latin1.parse()
+        // aurait mal interprété les octets bruts et produit un MD5 invalide.
+        // CryptoJS.lib.WordArray.create() accepte directement un
+        // Uint8Array/tableau d'octets.
         calculateMD5Hash: (image) => {
-          const wordArray = CryptoJS.enc.Latin1.parse(image);
-          return CryptoJS.MD5(wordArray);
+          const wordArray = CryptoJS.lib.WordArray.create(image);
+          return CryptoJS.MD5(wordArray).toString();
         }
       };
       await esploader.writeFlash(flashOptions);
       log('PROGRAMMATION TERMINÉE !', 'success');
       log('Reset de l\'ESP32...');
-      // Reset géré nativement par esptool-js
-      try {
-        await esploader.after("hard_reset");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        log('ESP32 redémarré avec le nouveau firmware', 'success');
-      } catch (error) {
-        log(`Erreur lors du reset: ${error.message}`, 'error');
-        if (port) {
-          try {
-            await port.setSignals({ dataTerminalReady: false, requestToSend: false });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            await port.setSignals({ dataTerminalReady: true, requestToSend: true });
-            log('Reset manuel effectué', 'warning');
-          } catch (e) {
-            log(`Erreur lors du reset manuel: ${e.message}`, 'error');
-          }
-        }
-      }
+
+      // FIX: comme pour la connexion et la déconnexion, on force un vrai
+      // cycle RTS après le flash pour garantir que l'ESP32 redémarre
+      // réellement avec le nouveau firmware.
+      await hardResetClassic(transport);
+      log('ESP32 redémarré avec le nouveau firmware', 'success');
       log('Vous pouvez débrancher l\'ESP32', 'success');
     } catch (error) {
       log('ERREUR DE PROGRAMMATION', 'error');
@@ -271,5 +297,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  log('Connectez votre carte - 0.5.6');
+  log('Connectez votre carte - 0.6.1');
 });
