@@ -1,47 +1,34 @@
 /**
- * Header
+ * Beyou Flash Utility - Feuille de style unique
+ * (fusion de l'ancien style.css + light.css, nettoyée du code mort
+ * hérité du template Adafruit WebSerial ESPTool : mode sombre jamais
+ * branché, switches on/off, upload de .bin, barre de progression,
+ * ancien panneau de logs #app/#commands/#log)
  */
 
-.header {
+:root {
+  --color-text: #000;
+  --color-bg: #fff;
+  --color-header-bg: #000;
+  --color-header-text: #fff;
+  --color-accent: #00a7e9;
+  --color-success: #8ec641;
+  --color-success-dark: #71ae1e;
+  --color-danger: #c64141;
+  --color-danger-dark: #900;
+  --color-muted-bg: #f5f5f5;
+  --color-disabled-bg: #ccc;
+  --color-disabled-border: #999;
+  --radius-lg: 15px;
+  --radius-md: 10px;
+  --radius-sm: 5px;
+  --transition-fast: 0.2s ease;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  font-size: 16px;
-  height: 85px;
-  line-height: 40px;
-  padding: 20px 70px 0px 70px; /* TRouBLe */
-  position: fixed;
-  width: 100%;
-  z-index: 1000;
-  margin: 0;
-  border-bottom: 5px solid #00a7e9;
-}
-
-.header h1 {
-  flex: 1;
-  font-size: 20px;
-  font-weight: 400;
-}
-
-.header button {
-  border: solid 2px #fff;
-  background-color: #000;
-  color: #fff;
-  margin-left: 20px;
-  height: 30px;
-}
-
-.header button:hover {
-  background-color: #fff;
-  color: #000;
-}
-
-button,
-.firmware {
-  height: 25px;
-  font-size: 16px;
-  border-radius: 15px;
-  padding-left: 20px;
-  padding-right: 20px;
-  border-width: 2px;
 }
 
 body {
@@ -49,6 +36,8 @@ body {
   font-style: normal;
   font-weight: 400;
   margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 p {
@@ -61,6 +50,15 @@ button,
 label {
   font-weight: 600;
   outline: none;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 div.left {
@@ -79,20 +77,77 @@ div.clear {
   clear: both;
 }
 
-.main {
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-top: 80px;
+.justify {
+  display: flex;
+  justify-content: space-between;
+}
+
+.center {
+  text-align: center;
 }
 
 .hidden {
   display: none;
 }
 
+/**
+ * Header
+ */
+
+.header {
+  box-sizing: border-box;
+  font-size: 16px;
+  height: 85px;
+  line-height: 40px;
+  padding: 20px 70px 0px 70px;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  margin: 0;
+  border-bottom: 5px solid var(--color-accent);
+  background: var(--color-header-bg);
+  color: var(--color-header-text);
+}
+
+.header button {
+  border: solid 2px #fff;
+  background-color: #000;
+  color: #fff;
+  margin-left: 20px;
+  height: 30px;
+  border-radius: var(--radius-lg);
+  padding-left: 20px;
+  padding-right: 20px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.header button:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+.Logo {
+  height: 45px;
+}
+
+.main {
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-top: 80px;
+}
+
 .notSupported {
   padding: 1em;
   margin-top: 1em;
   margin-bottom: 1em;
+  background-color: red;
+  color: white;
+}
+
+.notSupported a {
+  background-color: red;
+  color: white;
 }
 
 .subheader {
@@ -107,288 +162,10 @@ div.clear {
   font-weight: 500;
 }
 
-#app.connected #commands {
-  height: 200px;
-}
-
-#app.connected #log {
-  height: calc(100vh - 530px);
-}
-
-#app #commands {
-  height: 0;
-}
-
-#app #log {
-  height: calc(100vh - 330px);
-}
-
-#commands,
-#log {
-  transition: height 0.5s;
-}
-
-#commands {
-  position: relative;
-  margin: 0 auto;
-  overflow-y: auto;
-  padding: 0 60px;
-}
-
-#log {
-  max-width: 100%;
-  font-family: pt-mono, monospace;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 16px;
-  overflow-x: hidden;
-  overflow-x: auto;
-  transition: color 0.1s linear;
-  padding: 0 50px;
-  border: 20px solid #000;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  background-color: #000;
-  color: #cecece;
-}
-
-#log::-webkit-scrollbar {
-  display: none;
-}
-
-.footer {
-  padding-left: 70px;
-  padding-right: 70px;
-}
-
-.footer a {
-  color: blue;
-}
-
-.footer .controls {
-  line-height: 45px;
-}
-
-.footer button {
-  font-size: 14px;
-  margin: 0 10px;
-}
-
-.remix {
-  display: flex;
-  justify-content: center;
-  height: 60px;
-  position: relative;
-}
-
-.remix button {
-  position: absolute;
-  bottom: 11px;
-}
-
-#templates {
-  display: none;
-}
-
-/* On/Off Switch Widget */
-.onoffswitch {
-  display: inline-block;
-  position: relative;
-  width: 50px;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  margin-left: 10px;
-}
-
-.onoffswitch-checkbox {
-  display: none;
-}
-
-.onoffswitch-label {
-  display: block;
-  overflow: hidden;
-  cursor: pointer;
-  border: 1px solid #900;
-  border-radius: 15px;
-  transition: border 0.3s ease-in 0s;
-}
-
-.onoffswitch-inner {
-  display: block;
-  width: 200%;
-  margin-left: -100%;
-  transition: margin 0.3s ease-in 0s;
-}
-
-.onoffswitch-inner:before,
-.onoffswitch-inner:after {
-  display: block;
-  float: left;
-  width: 50%;
-  height: 25px;
-  padding: 0;
-  line-height: 25px;
-  font-size: 14px;
-  color: white;
-  font-family: proxima-nova, sans-serif;
-  font-style: normal;
-  font-weight: 600;
-  box-sizing: border-box;
-}
-
-.onoffswitch-inner:before {
-  content: "on";
-  padding-left: 6px;
-  background-color: #8ec641;
-  color: #fff;
-}
-
-.onoffswitch-inner:after {
-  content: "off";
-  padding-right: 6px;
-  background-color: #c64141;
-  color: #fff;
-  text-align: right;
-}
-
-.onoffswitch-switch {
-  display: block;
-  width: 19px;
-  margin: 3px;
-  background: #fff;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 23px;
-  border: 1px solid #900;
-  border-radius: 15px;
-  transition: all 0.3s ease-in 0s;
-}
-
-.onoffswitch-checkbox:checked + .onoffswitch-label {
-  border-color: #71ae1e;
-}
-
-.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
-  margin-left: 0;
-}
-
-.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
-  right: 0px;
-  border-color: #67ac38;
-}
-
-.footer .onoffswitch {
-  margin-right: 20px;
-  top: 7px;
-}
-
-#butClear {
-  margin-top: 10px;
-}
-
-#commands {
-  min-width: 600px;
-  justify-content: center;
-  position: relative;
-  align-items: center;
-}
-
-#commands .upload {
-  width: 600px;
-  display: flex;
-  align-items: center;
-  margin: 5px auto;
-  justify-content: center;
-}
-
-#commands .upload .offset {
-  width: 50px;
-}
-
-#commands .upload label {
-  white-space: nowrap;
-}
-
-.firmware > input {
-  width: 0.1px;
-  height: 0.1px;
-  opacity: 0;
-  overflow: hidden;
-  position: absolute;
-  z-index: -1;
-}
-
-.firmware {
-  border-style: solid;
-  margin-left: 20px;
-  margin-right: 20px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.firmware > svg {
-  margin-right: 10px;
-}
-
-.debug-function {
-  color: #8ec641;
-}
-
-.error-message {
-  color: #c64141;
-}
-
-.timestamp {
-  color: #8ec641;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 24px;
-  border-style: solid;
-  border-width: 2px;
-  border-radius: 10px;
-  padding: 0;
-  overflow: hidden;
-}
-
-.progress-bar > div {
-  height: 24px;
-  background-color: #71ae1e;
-  width: 0;
-}
-
-#commands .buttons {
-  display: flex;
-  justify-content: center;
-  width: 600px;
-  margin: 10px auto;
-}
-
-#commands .buttons button {
-  margin-left: 10px;
-  margin-right: 10px;
-  border-width: 2px;
-  border-style: solid;
-}
-
-.justify {
-  display: flex;
-  justify-content: space-between;
-}
-
-.center {
-  text-align: center;
-}
-
 /**
- * Nouveaux styles pour la section firmware personnalisé
+ * Contenu principal
  */
 
-/* Section principale de contenu */
 .content {
   padding: 20px 70px;
   max-width: 100%;
@@ -397,52 +174,50 @@ div.clear {
 
 /* Section de sélection du firmware */
 .firmware-selector {
-  background-color: #f5f5f5;
+  background-color: var(--color-muted-bg);
   padding: 30px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   margin-bottom: 30px;
-  border: 2px solid #00a7e9;
+  border: 2px solid var(--color-accent);
 }
 
 .firmware-selector h2 {
   margin-top: 0;
   margin-bottom: 20px;
-  color: #000;
+  color: var(--color-text);
   font-size: 24px;
   font-weight: 500;
 }
 
-/* Sélecteur de firmware stylisé */
 #firmware-picker {
   width: 100%;
   padding: 12px 20px;
   font-size: 16px;
   font-weight: 600;
   border: 2px solid #000;
-  border-radius: 15px;
+  border-radius: var(--radius-lg);
   background-color: #fff;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   font-family: proxima-nova, sans-serif;
 }
 
 #firmware-picker:hover {
-  border-color: #00a7e9;
+  border-color: var(--color-accent);
 }
 
-#firmware-picker:focus {
-  border-color: #00a7e9;
+#firmware-picker:focus-visible {
+  border-color: var(--color-accent);
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 167, 233, 0.2);
 }
 
-/* Information sur le firmware sélectionné */
 #firmware-info {
   margin-top: 20px;
   padding: 20px;
   background-color: #e7f3ff;
-  border-left: 4px solid #00a7e9;
-  border-radius: 5px;
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--radius-sm);
 }
 
 #firmware-info p {
@@ -451,14 +226,14 @@ div.clear {
 }
 
 #firmware-description {
-  color: #000;
+  color: var(--color-text);
 }
 
 #firmware-description strong {
   display: block;
   margin-bottom: 10px;
   font-size: 18px;
-  color: #00a7e9;
+  color: var(--color-accent);
 }
 
 /* Section des boutons de programmation */
@@ -476,62 +251,56 @@ div.clear {
   font-size: 18px;
   font-weight: 600;
   border: 2px solid;
-  border-radius: 15px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
   font-family: proxima-nova, sans-serif;
 }
 
 #programButton {
-  background-color: #8ec641;
-  border-color: #71ae1e;
+  background-color: var(--color-success);
+  border-color: var(--color-success-dark);
   color: #fff;
 }
 
 #programButton:hover:not(:disabled) {
-  background-color: #71ae1e;
+  background-color: var(--color-success-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-#programButton:disabled {
-  background-color: #ccc;
-  border-color: #999;
+#programButton:disabled,
+#eraseButton:disabled {
+  background-color: var(--color-disabled-bg);
+  border-color: var(--color-disabled-border);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 #eraseButton {
-  background-color: #c64141;
-  border-color: #900;
+  background-color: var(--color-danger);
+  border-color: var(--color-danger-dark);
   color: #fff;
 }
 
 #eraseButton:hover:not(:disabled) {
-  background-color: #900;
+  background-color: var(--color-danger-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-#eraseButton:disabled {
-  background-color: #ccc;
-  border-color: #999;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 /* Section de sortie console */
 .console-output {
-  background-color: #f5f5f5;
+  background-color: var(--color-muted-bg);
   padding: 30px;
-  border-radius: 10px;
-  border: 2px solid #00a7e9;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-accent);
 }
 
 .console-output h3 {
   margin-top: 0;
   margin-bottom: 15px;
-  color: #000;
+  color: var(--color-text);
   font-size: 20px;
   font-weight: 500;
 }
@@ -540,7 +309,7 @@ div.clear {
   background-color: #1e1e1e;
   color: #d4d4d4;
   padding: 20px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   font-family: pt-mono, monospace;
   font-size: 14px;
   line-height: 1.5;
@@ -562,33 +331,55 @@ div.clear {
 
 .console::-webkit-scrollbar-thumb {
   background: #555;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
 }
 
 .console::-webkit-scrollbar-thumb:hover {
   background: #777;
 }
 
-/* Responsive pour petits écrans */
+/**
+ * Footer
+ */
+
+.footer {
+  padding: 15px 70px;
+}
+
+.footer a {
+  color: var(--color-accent);
+}
+
+/**
+ * Responsive
+ */
+
 @media (max-width: 768px) {
-  .content {
-    padding: 20px 20px;
+  .header,
+  .subheader,
+  .footer {
+    padding-left: 20px;
+    padding-right: 20px;
   }
-  
+
+  .content {
+    padding: 20px;
+  }
+
   .firmware-selector,
   .console-output {
     padding: 20px;
   }
-  
+
   .program-section {
     flex-direction: column;
   }
-  
+
   .program-section button {
     max-width: 100%;
   }
-  
+
   #firmware-picker {
     font-size: 14px;
   }
-  }
+}
