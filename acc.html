@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <title>Beyou Flash Utility</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      // Redirection vers HTTPS si nécessaire
+      if (
+        window.location.hostname !== "localhost" &&
+        window.location.protocol === "http:"
+      ) {
+        window.location.href = "https:" + window.location.href.substring(5);
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+    <script type="module">
+      import { Transport, ESPLoader } from 'https://unpkg.com/esptool-js@0.6.1/bundle.js';
+      window.esptool = { Transport, ESPLoader };
+    </script>
+    <link rel="stylesheet" href="https://use.typekit.net/qtk5kiq.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="left">
+        <img src="assets/logo.jpeg" class="Logo" alt="Logo" />
+      </div>
+      <div class="right">
+        <select id="baudRate"></select>
+        <button id="butConnect" type="button">Connect</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <div id="notSupported" class="notSupported" style="display: none;">
+        Désolé, <b>Web Serial</b> n'est pas supporté sur cet appareil. Assurez-vous d'utiliser Chrome 89 ou une version ultérieure.
+      </div>
+
+      <div class="subheader">
+        <div class="title left">SFA Flasher</div>
+      </div>
+
+      <div class="content">
+        <div class="firmware-selector">
+          <h2>Sélectionner un firmware</h2>
+          <select id="firmware-picker">
+            <option value="sfa" selected>SFA Production</option>
+          </select>
+          <div id="firmware-info" style="margin-top: 20px;">
+            <p id="firmware-description">Firmware sélectionné : <strong>SFA Production</strong> (Version : 1.X)</p>
+          </div>
+        </div>
+
+        <div class="program-section">
+          <button id="programButton" type="button" disabled>Programmer</button>
+          <button id="eraseButton" type="button" disabled>Effacer</button>
+        </div>
+
+        <div class="console-output">
+          <h3>Console</h3>
+          <div id="console" class="console"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>© 2026</p>
+    </footer>
+
+    <script>
+      window.firmwareManifests = {
+        "sfa": {
+          name: "SFA Production",
+          version: "1.9.0",
+          home_assistant_domain: null,
+          new_install_prompt_erase: true,
+          builds: [
+            {
+              chipFamily: "ESP32-S3",
+              improv: false,
+              parts: [
+                { path: "firmwares/sfa/bootloader.bin", offset: 0x0 },
+                { path: "firmwares/sfa/partitions.bin", offset: 0x8000 },
+                { path: "firmwares/sfa/firmware.bin", offset: 0x10000 }
+              ]
+            }
+          ]
+        }
+        
+      };
+
+      document.getElementById('firmware-picker').addEventListener('change', function() {
+        const selectedFirmware = this.value;
+        const firmware = window.firmwareManifests[selectedFirmware];
+        document.getElementById('firmware-description').innerHTML =
+          `Firmware sélectionné : <strong>${firmware.name}</strong> (Version : ${firmware.version})`;
+      });
+    </script>
+
+    <script type="module" src="js/script.js"></script>
+  </body>
+</html>
