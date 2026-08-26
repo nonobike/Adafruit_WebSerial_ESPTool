@@ -1,4 +1,4 @@
-import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.6.0/bundle.js";
+import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.6.1/bundle.js";
 // Previously using local copy of the esptool-js bundle
 //import { ESPLoader, Transport } from "./bundle.js";
 
@@ -109,6 +109,25 @@ function errorMsg(text) {
     console.error(text);
 }
 
+// FIX: esploader.after("hard_reset") (et donc esploader.main("default_reset"))
+// ne fait qu'un setRTS(false). Si RTS est déjà à false (ce qui est le cas
+// après la séquence de connexion ROM), cet appel ne produit aucune
+// transition électrique sur la broche EN, donc aucun reset matériel réel sur
+// les cartes à circuit auto-reset classique (RTS/DTR, ex: CP2102/CH340). On
+// force ici une vraie impulsion RTS true -> false pour garantir le reboot.
+async function hardResetClassic(transportInstance) {
+    if (!transportInstance) return;
+    try {
+        writeLogLine("Hard resetting via RTS pin...");
+        await transportInstance.setRTS(true);
+        await sleep(100);
+        await transportInstance.setRTS(false);
+        await sleep(100);
+    } catch (e) {
+        errorMsg(e.message || e);
+    }
+}
+
 /**
  * @name updateTheme
  * Sets the theme to  Adafruit (dark) mode. Can be refactored later for more themes
@@ -187,6 +206,15 @@ async function clickConnect() {
 
         // Temporarily broken
         // await esploader.flashId();
+
+        // FIX: en mode passthrough (noReset coché), on ne touche pas aux
+        // lignes RTS/DTR pour ne pas perturber le device en aval. Dans tous
+        // les autres cas, on force un vrai cycle RTS pour garantir que le
+        // chip redémarre effectivement après la connexion.
+        if (!noReset.checked) {
+            await hardResetClassic(transport);
+        }
+
         toggleUIConnected(true);
         toggleUIToolbar(true);
 
@@ -311,6 +339,13 @@ async function clickProgram() {
             },
         };
         await esploader.writeFlash(flashOptions);
+
+        // FIX: comme pour la connexion, on force un vrai cycle RTS après le
+        // flash pour garantir que le chip redémarre réellement, sauf en mode
+        // passthrough (noReset coché) où on ne doit pas toucher RTS/DTR.
+        if (!noReset.checked) {
+            await hardResetClassic(transport);
+        }
     } catch (e) {
         console.error(e);
         errorMsg(e.message);
